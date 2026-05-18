@@ -1,0 +1,90 @@
+// Shared type aliases for the RSS news pipeline.
+// No runtime code — pure type declarations.
+// See project-design.md §2 for the canonical contract.
+
+/**
+ * One feed entry as it appears in config/rss-sources.json after JSON.parse.
+ * Loader (config.ts) validates this shape and throws ConfigSchemaError on mismatch.
+ */
+export type FeedSource = {
+  name: string;
+  url: string;
+  enabled: boolean;
+};
+
+/**
+ * Normalized item shape emitted by parse.ts. F3 contract.
+ * `guid` / `link` may be absent depending on feed quality; fingerprint walks
+ * the fallback chain (guid -> link -> title).
+ */
+export type FeedItem = {
+  feedName: string;
+  guid: string | null;
+  link: string | null;
+  title: string;
+  publishedAt: Date | null;
+  rawContent: string | null;
+};
+
+/**
+ * The four-field JSON object Azure OpenAI must return. F5 contract.
+ */
+export type TriageResult = {
+  relevant: boolean;
+  audience: "beginner" | "advanced" | "both";
+  topics: string[];
+  summary: string;
+};
+
+/**
+ * The triaged item ready to be written. write.ts and pr.ts both consume this.
+ */
+export type EmittedItem = {
+  item: FeedItem;
+  triage: TriageResult;
+  runDateUtc: string;
+  fingerprint: string;
+  slug: string;
+  filename: string;
+};
+
+/**
+ * The 12-key frontmatter object. AC11 asserts EXACTLY these keys, no more, no less.
+ */
+export type NewsFrontmatter = {
+  type: "news";
+  title: string;
+  audience: "beginner" | "advanced" | "both";
+  topics: string[];
+  internal: false;
+  authored: string;
+  last_reviewed: string;
+  external_link: string | null;
+  deeper_link: null;
+  ai_summary: string;
+  source: string;
+  fingerprint: string;
+};
+
+/**
+ * Aggregate result returned by the orchestrator. Drives the step output and exit code.
+ */
+export type RunResult = {
+  feedsAttempted: number;
+  feedsFailed: { name: string; reason: string }[];
+  itemsFetched: number;
+  itemsDeduped: number;
+  itemsJudgedIrrelevant: number;
+  itemsWritten: EmittedItem[];
+  exitCode: 0 | 1;
+};
+
+/**
+ * Output of env.ts — the four validated AZURE_OPENAI_* values.
+ */
+export type EnvConfig = {
+  endpoint: string;
+  deployment: string;
+  apiVersion: string;
+  apiKey: string;
+};

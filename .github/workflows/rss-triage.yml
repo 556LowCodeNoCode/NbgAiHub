@@ -1,0 +1,97 @@
+name: rss-triage
+
+# Triggers (AC1): daily cron + manual dispatch.
+# Cron is a placeholder per Assumption A2 — flipping cadence (weekly,
+# twice-weekly, etc.) means changing this single line, not the code.
+on:
+  schedule:
+    - cron: "0 6 * * *"        # A2 placeholder — daily 06:00 UTC
+  workflow_dispatch: {}
+
+# Workflow-scoped GITHUB_TOKEN permissions (AC18).
+# This block MUST contain exactly `contents: write` and `pull-requests: write`
+# and nothing else. Anything more is over-privileged; anything less and
+# `git push` (contents) or `gh pr create` (pull-requests) will fail at runtime.
+permissions:
+  contents: write
+  pull-requests: write
+
+# Reconciliation R-2 (Investigation §7). Fixed group name — cron always fires
+# on the default branch, so there is no ref to parameterize on. With
+# `cancel-in-progress: false` an in-flight pipeline finishes its PR rather
+# than being killed mid-`gh pr create`. A manual `workflow_dispatch` that
+# arrives while a cron run is mid-flight is queued behind it, not run in
+# parallel.
+concurrency:
+  group: rss-triage
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # NOTE: `actions/checkout@v4` defaults `persist-credentials: true` —
+      # that default is LOAD-BEARING for the `git push` in the editorial-PR
+      # step below. Do not set `persist-credentials: false` here without
+      # re-wiring auth (Investigation §3 pitfall).
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # needed so dedup.ts can walk full /news history
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: pipeline/.nvmrc
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+
+      - name: Install pipeline dependencies
+        run: npm ci
+        working-directory: pipeline
+
+      - name: Build pipeline
+        run: npm run build
+        working-directory: pipeline
+
+      # Run the Node orchestrator. It reads the four AZURE_OPENAI_* secrets,
+      # walks the feeds, calls Azure OpenAI per item, emits markdown files to
+      # /news/incoming/, writes pipeline/pr-body.md when there is at least one
+      # new item, and sets `new_items=true|false` on $GITHUB_OUTPUT. The
+      # subsequent step is gated on that output (AC14 empty-run no-op).
+      - name: Run RSS triage pipeline
+        id: pipeline
+        run: npm run start
+        working-directory: pipeline
+        env:
+          AZURE_OPENAI_ENDPOINT:    ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOYMENT:  ${{ secrets.AZURE_OPENAI_DEPLOYMENT }}
+          AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+          AZURE_OPENAI_API_KEY:     ${{ secrets.AZURE_OPENAI_API_KEY }}
+
+      # Editorial PR creation (AC13). Gated on the orchestrator's step output
+      # so that an empty run (zero new items) is a clean no-op (AC14).
+      # Body is written by the Node program to pipeline/pr-body.md and passed
+      # via --body-file (Investigation §3: multi-line bodies via -b "..." are
+      # shell-escape fragile; --body-file is the clean path).
+      - name: Open editorial PR
+        if: steps.pipeline.outputs.new_items == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          DATE_UTC=$(date -u +%F)
+          BRANCH="news-triage/${DATE_UTC}-${GITHUB_RUN_ID:0:7}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add news/incoming
+          git commit -m "News triage ${DATE_UTC}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "News triage ${DATE_UTC}" \
+            --body-file pipeline/pr-body.md

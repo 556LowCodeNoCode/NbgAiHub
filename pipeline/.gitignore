@@ -1,0 +1,6 @@
+dist/
+node_modules/
+coverage/
+pr-body.md
+*.log
+.DS_Store

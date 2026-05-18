@@ -34,7 +34,7 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 │   │                            triage, slug, frontmatter, write, pr, etc.
 │   └── tests/                 ← 14 test files, 88 tests, vitest
 ├── .github/workflows/
-│   └── rss-triage.yml         ← daily cron 06:00 UTC + workflow_dispatch
+│   └── rss-triage.yml         ← daily cron 05:00 UTC = 08:00 Athens (DST) + workflow_dispatch
 └── docs/
     ├── design/                ← project-design.md, plan-001-rss-pipeline.md, etc.
     ├── reference/             ← code-review, dep-validation, integration-verification

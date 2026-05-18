@@ -25,7 +25,7 @@ The pipeline is a single GitHub Action workflow that invokes a Node 22 / ESM / T
   ┌─────────────────────────────────────────────────────────────────────────┐
   │                                                                         │
   │  ┌─────────────────────────────────────────────────────────────────┐    │
-  │  │  cron: 0 6 * * *      OR      workflow_dispatch                 │    │
+  │  │  cron: 0 5 * * *      OR      workflow_dispatch                 │    │
   │  └────────────────────────────────┬────────────────────────────────┘    │
   │                                   │                                     │
   │                                   v                                     │
@@ -894,7 +894,7 @@ name: rss-triage
 
 on:
   schedule:
-    - cron: "0 6 * * *"        # A2 placeholder — daily 06:00 UTC
+    - cron: "0 5 * * *"        # daily 05:00 UTC = 08:00 Athens (DST) / 07:00 (winter)
   workflow_dispatch: {}
 
 permissions:
@@ -1225,3 +1225,729 @@ The design is correct iff every row below holds. The Phase 6 Coder spec is exact
 ---
 
 *End of project-design.md, version 1 — RSS news pipeline. Subsequent features append new top-level sections (`## 2. <feature> …`).*
+
+---
+
+## Site architecture
+
+**Feature:** Astro 6 + Starlight 0.39 static site at `site/` (sibling workspace to `pipeline/`).
+**Plan of record:** `docs/design/plan-002-astro-starlight-site.md` (13 steps).
+**Refined request:** `docs/refined-requests/astro-starlight-site.md` (20 ACs, 18 Assumptions, A1/A2 superseded to Astro 6 + Starlight 0.39 per DECISIONS.md 2026-05-18).
+**Investigation:** `docs/reference/investigation-astro-site.md`.
+**Codebase scan:** `docs/reference/codebase-scan-astro-site.md`.
+
+This section defines **interfaces, contracts, data models, module structure, and architecture-level decisions** for the site workspace. It does NOT re-sequence the work — Steps 1–13 in plan-002 are authoritative. Where this design adds detail beyond the plan, it expands inside the plan's step boundaries; it does not reorder them.
+
+### Conflicts requiring user input
+
+**None.** The refined request (post A1/A2 supersession), plan-002 (13 steps, 7 reconciliations R-1 through R-7), and the investigation are internally consistent. The three open questions (OQ1 hosting, OQ2 branding, OQ3 skill catalog fields) are all explicitly deferred and need no design accommodation. AC16 (lint script) is vacuously satisfied per plan §4 — no ESLint configured for `site/` in MVP; `astro check` covers the static-analysis surface.
+
+A note on A9 rationale refresh (plan R-6): this is a cosmetic update to refined-request A9 that the Designer should propagate during Step 13 documentation work. It does not change any contract here.
+
+---
+
+### S.1 System architecture and component diagram
+
+The site is a **purely static** SSG build. There is no runtime backend, no client islands beyond a single vanilla `<script>` for the audience filter, and no fetch from the browser to any service except Pagefind's pre-built index loaded as static JSON.
+
+**Data flow** — content folders at the repo root flow through Astro's content collection layer into page templates and out to a static `dist/` directory:
+
+```
+┌────────────────────────── repo root ───────────────────────────────┐
+│                                                                    │
+│   news/published/*.md  ─┐                                          │
+│   skills/*.md          ─┤                                          │
+│   tips/*.md            ─┼──► glob() loader  ──► Zod validation     │
+│   glossary/*.md        ─┤    (../<folder>)    (5 collections)      │
+│   journeys/*.md        ─┘                          │               │
+│                                                    ▼               │
+│                                            ┌──────────────┐        │
+│                                            │ astro:content│        │
+│                                            │ getCollection│        │
+│                                            └──────┬───────┘        │
+│                                                   │                │
+│   site/                                           ▼                │
+│   ├── astro.config.mjs ◄─── starlight({ sidebar, customCss })      │
+│   ├── src/                                                         │
+│   │   ├── content.config.ts ◄── 5 defineCollection() entries       │
+│   │   ├── content/docs/index.mdx  (template: splash)               │
+│   │   │     │   imports HomeHero, NewsPanel                        │
+│   │   │     ▼                                                      │
+│   │   ├── pages/                                                   │
+│   │   │   ├── news/index.astro      ─► /news/                      │
+│   │   │   ├── news/[slug].astro     ─► /news/<slug>/    (getStaticPaths)
+│   │   │   ├── skills.astro          ─► /skills/                    │
+│   │   │   ├── tips.astro            ─► /tips/                      │
+│   │   │   ├── glossary.astro        ─► /glossary/  (anchor links)  │
+│   │   │   ├── reference.astro       ─► /reference/                 │
+│   │   │   ├── contribute.astro      ─► /contribute/                │
+│   │   │   └── start-here/                                          │
+│   │   │       ├── day-1.astro       ─► /start-here/day-1/          │
+│   │   │       └── week-1.astro      ─► /start-here/week-1/         │
+│   │   ├── components/                                              │
+│   │   │   ├── HomeHero.astro                                       │
+│   │   │   ├── NewsPanel.astro       (uses getRecentNews helper)    │
+│   │   │   ├── NewsList.astro        (uses getRecentNews helper)    │
+│   │   │   ├── AudienceBadge.astro                                  │
+│   │   │   ├── SkillCard.astro                                      │
+│   │   │   └── AudienceFilter.astro  (inline <script>, localStorage)│
+│   │   ├── lib/                                                     │
+│   │   │   └── news.ts               (getRecentNews helper)         │
+│   │   └── styles/                                                  │
+│   │       └── custom.css            (~100 LOC max)                 │
+│   │                                                                │
+│   └── (build output, gitignored)                                   │
+│       └── dist/                                                    │
+│           ├── index.html                  (homepage)               │
+│           ├── news/index.html             (+ news/<slug>/index.html)
+│           ├── skills/index.html                                    │
+│           ├── tips/index.html                                      │
+│           ├── glossary/index.html         (#term anchors)          │
+│           ├── reference/index.html                                 │
+│           ├── contribute/index.html                                │
+│           ├── start-here/{day-1,week-1}/index.html                 │
+│           ├── _astro/*.css                (Starlight + custom.css) │
+│           └── pagefind/                   (search index, AC17)     │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Key architectural facts:**
+
+1. **Reads are cross-workspace, writes are not.** Site reads markdown from `../news/published/`, `../skills/`, `../tips/`, `../glossary/`, `../journeys/`. It never writes back. The pipeline writes; the site consumes.
+2. **No runtime AI, no runtime fetch.** Per DECISIONS.md "AI strategy: build-time + Claude skill, not web runtime". The browser only loads static HTML + CSS + the Pagefind index + the AudienceFilter `<script>`.
+3. **No client islands.** The audience filter is a single inline `<script>` block — vanilla JS, no hydration boundary, no framework. Starlight does not enable `<ClientRouter />` by default, so every navigation is a full page load and the script runs from scratch on each page (investigation §5a).
+4. **Two routing surfaces, by design.** Homepage at `src/content/docs/index.mdx` (uses Starlight's `template: splash`); every other page is `.astro` under `src/pages/` wrapped in `<StarlightPage>`. The homepage needs MDX for component imports; the catalog pages need `getCollection()` and programmatic rendering. (Plan R-4, R-5.)
+5. **Content layer is strict.** Astro's `astro sync` validates every markdown file's frontmatter against its Zod schema; violations fail `astro check` and (transitively) `npm run build`. No silent skipping (AC18 / NF8).
+
+### S.2 Module structure under `site/`
+
+Concrete file inventory with responsibilities. Every path is relative to repo root.
+
+| Path | Responsibility | Owner step |
+|---|---|---|
+| `site/package.json` | Deps (`astro ^6`, `@astrojs/starlight ^0.39`, `@astrojs/check`), scripts per S.6, `"type": "module"`, `engines.node: ">=22"`. | Step 1, 3 |
+| `site/tsconfig.json` | Extends `astro/tsconfigs/strict`. Sets `noUncheckedIndexedAccess: true`. No other overrides. | Step 3 |
+| `site/.nvmrc` | Contains `22\n`. | Step 2 |
+| `site/.gitignore` | Astro emits this on scaffold: `node_modules/`, `dist/`, `.astro/`, `.env*`, `.DS_Store`. No changes needed. | Step 1 |
+| `site/astro.config.mjs` | `defineConfig({ server: { port: 4321, host: false }, integrations: [starlight({ title, sidebar: [...9 entries], customCss: ['./src/styles/custom.css'] })] })`. | Steps 2, 5, 6 |
+| `site/src/content.config.ts` | 5 `defineCollection()` entries via `glob()` loader. News uses `generateId` callback for date-stripped slugs. Zod schemas per S.4. | Step 4 |
+| `site/src/lib/news.ts` | `getRecentNews(limit?: number)` helper shared by `NewsPanel` and `NewsList`. Centralises sort-by-`authored`-desc. | Step 7 (created in Step 7a per plan §3 "Parallelizable within Step 7") |
+| `site/src/components/HomeHero.astro` | Hero with title + tagline + 2 CTAs. Root has `class="not-content"`. | Step 7 |
+| `site/src/components/NewsPanel.astro` | Top-N news cards for homepage. Calls `getRecentNews(5)`. Empty-state branch. | Step 7 |
+| `site/src/components/NewsList.astro` | Full news list with topic filter chips + audience filter slot. | Step 7 |
+| `site/src/components/AudienceBadge.astro` | `<span class="audience-badge {audience}">…</span>`. Color via CSS class (S.4 / A7). | Step 7 |
+| `site/src/components/SkillCard.astro` | Card layout for a skill entry. | Step 7 |
+| `site/src/components/AudienceFilter.astro` | 3 checkboxes + inline `<script>` block; `localStorage` key `nbgaihub.audience`. | Step 7 |
+| `site/src/content/docs/index.mdx` | Homepage. Frontmatter `template: splash`. Imports + renders `<HomeHero />` and `<NewsPanel />`. | Step 8 |
+| `site/src/pages/news/index.astro` | `/news/` index. Wraps `NewsList` + `AudienceFilter` in `StarlightPage`. Empty-state branch. | Step 9 |
+| `site/src/pages/news/[slug].astro` | Dynamic per-item page. `getStaticPaths()` yields `{ params: { slug: item.id }, props: { item } }`. Renders title, `AudienceBadge`, topic chips, source, external link, `<Content />`. | Step 9 |
+| `site/src/pages/skills.astro` | `/skills/`. Card grid via `SkillCard` + `AudienceFilter`. Empty-state branch. | Step 9 |
+| `site/src/pages/tips.astro` | `/tips/`. Card grid + `AudienceFilter`. Empty-state branch. | Step 9 |
+| `site/src/pages/glossary.astro` | `/glossary/`. Single page; loops glossary entries; each rendered with `id="<entry.id>"` for anchor links (AC15). Empty-state branch. | Step 9 |
+| `site/src/pages/reference.astro` | Hand-authored cheatsheet inside `StarlightPage`. Opinionated tone. | Step 9 |
+| `site/src/pages/contribute.astro` | Hand-authored PR contribution flow inside `StarlightPage`. Opinionated tone. | Step 9 |
+| `site/src/pages/start-here/day-1.astro` | Placeholder with 6 step headings + "coming soon" body. | Step 9 |
+| `site/src/pages/start-here/week-1.astro` | Single-line "Week 1 — coming soon." placeholder. | Step 9 |
+| `site/src/styles/custom.css` | ≤100 LOC: `.home-hero`, `.news-card`, `.news-card-grid`, `.audience-badge.{beginner,advanced,both}`, `.audience-hidden`, optional `.card-grid`. | Step 6 |
+| `site/README.md` | HMR caveat (R-7), port assignment (4321), run commands. | Step 13 |
+
+**Path convention notes:**
+
+- The site does **not** use `.md`/`.mdx` files under `src/content/docs/` for catalog pages — they need `getCollection()` and conditional rendering, which only `.astro` under `src/pages/` provides cleanly (investigation §4e, plan R-5). The single MDX file under `src/content/docs/` is `index.mdx` for the splash homepage (plan R-4).
+- `src/lib/` is a project-conventional location for helpers not specific to a component or page. Mirrors pipeline's `pipeline/src/` module style. Holds `news.ts` only for MVP.
+- `public/` is created by the scaffold; we do not put anything in it for MVP (no logo, no static images per A6 / OQ2).
+
+### S.3 Public interfaces / contracts per component
+
+Each component's prop shape, render contract, and behavioural contract.
+
+#### S.3.1 `HomeHero.astro`
+
+```ts
+// Props (Astro frontmatter section)
+interface Props {
+  title: string                          // e.g., "NbgAiHub — what I wish I knew a year ago"
+  tagline: string                        // one-line subtitle
+  ctaPrimary?: { label: string; href: string }    // default: { label: 'Start Here → Day 1', href: '/start-here/day-1/' }
+  ctaSecondary?: { label: string; href: string }  // default: { label: 'Browse Skills', href: '/skills/' }
+}
+```
+
+**Render contract:**
+
+```html
+<section class="home-hero not-content">
+  <h1>{title}</h1>
+  <p class="home-hero__tagline">{tagline}</p>
+  <div class="home-hero__cta-row">
+    <a class="home-hero__cta home-hero__cta--primary" href={ctaPrimary.href}>{ctaPrimary.label}</a>
+    <a class="home-hero__cta home-hero__cta--secondary" href={ctaSecondary.href}>{ctaSecondary.label}</a>
+  </div>
+</section>
+```
+
+- Root has `class="not-content"` (investigation §4d) to opt out of Starlight prose margins.
+- No client behaviour.
+- Imported and used by `src/content/docs/index.mdx` only.
+
+#### S.3.2 `NewsPanel.astro`
+
+```ts
+interface Props {
+  limit?: number                         // default 5
+}
+```
+
+**Render contract:**
+
+- Calls `getRecentNews(limit ?? 5)` from `src/lib/news.ts`.
+- Renders one of two branches:
+  - **Non-empty:** `<div class="news-card-grid">` containing N `<article class="news-card" data-audience={item.data.audience} data-topics={item.data.topics.join(',')}>…</article>` items. Each card shows title (linked to `/news/<id>/`), `<AudienceBadge audience={item.data.audience} />`, topic chips, source name, authored date.
+  - **Empty:** `<p class="empty-state">No items yet. See <a href="/contribute/">Contribute</a> for how to add one.</p>` (A8 canonical copy).
+- No client behaviour; relies on `AudienceFilter` (mounted elsewhere on the page) to toggle `.audience-hidden` on `[data-audience]` cards.
+- Imported by `src/content/docs/index.mdx`.
+
+#### S.3.3 `NewsList.astro`
+
+```ts
+interface Props {
+  // Component reads collection internally; no consumer props.
+}
+```
+
+**Render contract:**
+
+- Calls `getRecentNews()` (no limit; full list).
+- Renders topic-filter chip toolbar (derived from the union of all `topics[]` across the collection) above the card grid. **Topic-filter chips are nice-to-have for MVP** — if scope pressure surfaces, defer to a follow-up; the audience filter alone satisfies F10.
+- Otherwise identical rendering shape to `NewsPanel` (same `.news-card-grid`, same `data-audience` + `data-topics` attributes so `AudienceFilter` works without re-wiring).
+- Empty-state branch identical to `NewsPanel`.
+- Imported by `src/pages/news/index.astro`.
+
+#### S.3.4 `AudienceBadge.astro`
+
+```ts
+interface Props {
+  audience: 'beginner' | 'advanced' | 'both'
+}
+```
+
+**Render contract:**
+
+```html
+<span class={`audience-badge audience-badge--${audience}`}>{audience}</span>
+```
+
+- Color comes from CSS class (S.4 / A7), not inline style: `.audience-badge--beginner { background: #0a7; color: #fff }` etc.
+- AC13 evidence: grep for the three hex values + the three modifier classes.
+- No props beyond `audience`. Calling code spells `audience` lowercase exactly.
+
+#### S.3.5 `SkillCard.astro`
+
+```ts
+import type { CollectionEntry } from 'astro:content'
+
+interface Props {
+  entry: CollectionEntry<'skills'>
+}
+```
+
+**Render contract:**
+
+```html
+<article class="skill-card" data-audience={entry.data.audience} data-topics={entry.data.topics.join(',')}>
+  <h3>
+    {entry.data.external_link
+      ? <a href={entry.data.external_link}>{entry.data.title} ↗</a>
+      : entry.data.title}
+  </h3>
+  <AudienceBadge audience={entry.data.audience} />
+  <div class="skill-card__topics">
+    {entry.data.topics.map((t) => <span class="topic-chip">{t}</span>)}
+  </div>
+  <p class="skill-card__summary">{entry.data.ai_summary}</p>
+</article>
+```
+
+- `external_link` is the install / repo URL; if null, render plain title.
+- Carries `data-audience` and `data-topics` so `AudienceFilter` can hide it.
+
+#### S.3.6 `AudienceFilter.astro`
+
+```ts
+interface Props {
+  scope?: string                         // CSS selector for filterable items; default '[data-audience]'
+}
+```
+
+**Render contract:**
+
+```html
+<form class="audience-filter not-content" data-scope={scope ?? '[data-audience]'}>
+  <label><input type="checkbox" value="beginner" checked /> Beginner</label>
+  <label><input type="checkbox" value="advanced" checked /> Advanced</label>
+  <label><input type="checkbox" value="both" checked /> Both</label>
+</form>
+
+<script>
+  // Inline module script (vanilla, no framework).
+  // Executes on every page load — Starlight does NOT enable <ClientRouter />,
+  // so no astro:page-load hookup is needed.
+  const KEY = 'nbgaihub.audience'
+  const DEFAULT = ['beginner', 'advanced', 'both']
+
+  function applyAll() {
+    document.querySelectorAll('.audience-filter').forEach((form) => {
+      const scope = form.getAttribute('data-scope') ?? '[data-audience]'
+      const boxes = form.querySelectorAll('input[type="checkbox"]')
+      const visible = new Set(
+        Array.from(boxes).filter((b) => b.checked).map((b) => b.value)
+      )
+      document.querySelectorAll(scope).forEach((el) => {
+        const a = el.getAttribute('data-audience') ?? 'both'
+        el.classList.toggle('audience-hidden', !visible.has(a))
+      })
+      try {
+        localStorage.setItem(KEY, JSON.stringify([...visible]))
+      } catch { /* private-mode / quota: ignore */ }
+    })
+  }
+
+  // Restore from localStorage on load
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) ?? JSON.stringify(DEFAULT))
+    document.querySelectorAll('.audience-filter input[type="checkbox"]').forEach((box) => {
+      box.checked = saved.includes(box.value)
+    })
+  } catch { /* malformed or unavailable: keep defaults */ }
+
+  applyAll()
+  document.querySelectorAll('.audience-filter input[type="checkbox"]').forEach((box) => {
+    box.addEventListener('change', applyAll)
+  })
+</script>
+```
+
+**Behavioural contract:**
+
+- On `DOMContentLoaded` (or end-of-body parse, whichever comes first), restore checkbox state from `localStorage["nbgaihub.audience"]`, then apply filter once.
+- On any checkbox `change`, recompute visible set, toggle `.audience-hidden` on every matching scope element, persist to `localStorage`.
+- If multiple `.audience-filter` forms exist on a page (e.g., one in `NewsList`, one elsewhere), all share the same `localStorage` state via `applyAll()` looping over every form. State stays consistent because both forms restore the same values on the same page load.
+- Persists across page navigations (Starlight uses full page loads, so `localStorage` is read fresh on every render).
+
+**AC14 evidence:** the inline `<script>` block contains `localStorage`, `data-audience`, and the `audience-hidden` class toggle.
+
+#### S.3.7 `getRecentNews(limit?: number)` (helper, `src/lib/news.ts`)
+
+```ts
+import { getCollection } from 'astro:content'
+import type { CollectionEntry } from 'astro:content'
+
+/**
+ * Returns published news entries sorted by `authored` descending,
+ * optionally sliced to the first `limit` items.
+ *
+ * Used by NewsPanel (limit=5) and NewsList (no limit).
+ * Pure (no side effects). Astro caches getCollection() per build.
+ */
+export async function getRecentNews(limit?: number): Promise<CollectionEntry<'news'>[]> {
+  const items = await getCollection('news')
+  const sorted = items.sort((a, b) => b.data.authored.localeCompare(a.data.authored))
+  return limit === undefined ? sorted : sorted.slice(0, limit)
+}
+```
+
+- `authored` is a `YYYY-MM-DD` string per the canonical shape, so `localeCompare` gives correct chronological ordering.
+- No filtering by `internal` flag for MVP — every published item is renderable. (If/when bank-internal items land, this is the choke point to add a filter.)
+
+### S.4 Data models — Zod schemas for 5 content collections
+
+**Critical coupling:** The news schema is a 1:1 mirror of the pipeline's `NewsFrontmatter` type at `pipeline/src/types.ts:54-67` and `pipeline/src/frontmatter.ts:14-28`. **Any change to the pipeline's frontmatter shape must be reflected here in the same PR**, and vice versa. Drift risk is accepted for MVP per refined-request A4; a future shared package can be extracted if drift becomes painful. Tracked in `Issues - Pending Items.md` per plan Step 13.
+
+Other collections (skills, tips, glossary, journeys) use the same canonical 12-key shape per DECISIONS.md "Shared content shape", differing only in the `type` literal and **without** the news-specific `source`, `fingerprint`, `hero_image` extras.
+
+**File: `site/src/content.config.ts`**
+
+```ts
+// site/src/content.config.ts
+//
+// Zod schemas for the 5 content collections.
+//
+// IMPORTANT — schema coupling:
+//   The `news` schema below is a 1:1 mirror of the pipeline's
+//   NewsFrontmatter type. The pipeline owns the canonical shape.
+//   Sources to keep in sync:
+//     - pipeline/src/types.ts:54-67   (NewsFrontmatter type alias)
+//     - pipeline/src/frontmatter.ts:14-28  (buildFrontmatter() emitter)
+//     - DECISIONS.md "Shared content shape"
+//   If either side changes, update the other in the same PR.
+//   See Issues - Pending Items.md follow-up: "extract shared
+//   frontmatter schema package if drift becomes painful".
+
+import { defineCollection } from 'astro:content'
+import { glob } from 'astro/loaders'
+import { z } from 'astro/zod'        // Astro 6 idiom (investigation §2b)
+
+// ─── Shared field shapes (DRY: built once, reused across schemas) ────
+
+const audienceEnum = z.enum(['beginner', 'advanced', 'both'])
+const isoDateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD')
+
+/**
+ * The 12 canonical keys shared by every content type per DECISIONS.md
+ * "Shared content shape". Each per-type schema layers a `type` literal
+ * on top of this base.
+ */
+function baseShape(typeLiteral: string) {
+  return {
+    type: z.literal(typeLiteral),
+    title: z.string().min(1),
+    audience: audienceEnum,
+    topics: z.array(z.string()),
+    internal: z.boolean(),
+    authored: isoDateString,
+    last_reviewed: isoDateString,
+    external_link: z.string().url().nullable(),
+    deeper_link: z.string().url().nullable(),
+    ai_summary: z.string(),
+  } as const
+}
+
+// ─── news ────────────────────────────────────────────────────────────
+// 12 canonical keys + news-specific `source` + `fingerprint`
+// + optional `hero_image` (forward-compat per A16).
+// Mirror of NewsFrontmatter at pipeline/src/types.ts:54-67.
+const news = defineCollection({
+  loader: glob({
+    pattern: '*.md',
+    base: '../news/published',
+    // Plan R-2: strip date prefix so /news/<slug> drops the date.
+    // 2026-05-18-foo-bar.md → entry.id === 'foo-bar' → /news/foo-bar/.
+    generateId: ({ entry }) => {
+      const withoutExt = entry.replace(/\.[^.]+$/, '')
+      return withoutExt.replace(/^\d{4}-\d{2}-\d{2}-/, '')
+    },
+  }),
+  schema: z.object({
+    ...baseShape('news'),
+    // News-specific:
+    source: z.string().min(1),
+    fingerprint: z.string().min(1),
+    hero_image: z.string().url().optional(),
+  }),
+})
+
+// ─── skills ──────────────────────────────────────────────────────────
+const skills = defineCollection({
+  loader: glob({ pattern: '*.md', base: '../skills' }),
+  schema: z.object(baseShape('skill')),
+})
+
+// ─── tips ────────────────────────────────────────────────────────────
+const tips = defineCollection({
+  loader: glob({ pattern: '*.md', base: '../tips' }),
+  schema: z.object(baseShape('tip')),
+})
+
+// ─── glossary ────────────────────────────────────────────────────────
+const glossary = defineCollection({
+  loader: glob({ pattern: '*.md', base: '../glossary' }),
+  schema: z.object(baseShape('glossary')),
+})
+
+// ─── journeys ────────────────────────────────────────────────────────
+const journeys = defineCollection({
+  loader: glob({ pattern: '*.md', base: '../journeys' }),
+  schema: z.object(baseShape('journey-step')),
+})
+
+export const collections = { news, skills, tips, glossary, journeys }
+```
+
+**AC4 evidence:** every one of the news-schema keys (`type`, `title`, `audience`, `topics`, `internal`, `authored`, `last_reviewed`, `external_link`, `deeper_link`, `ai_summary`, `source`, `fingerprint`, `hero_image`) is grep-findable in `content.config.ts`.
+
+**Type literal mapping** (per DECISIONS.md "Shared content shape" enum):
+
+| Collection | `type` literal |
+|---|---|
+| `news` | `'news'` |
+| `skills` | `'skill'` |
+| `tips` | `'tip'` |
+| `glossary` | `'glossary'` |
+| `journeys` | `'journey-step'` |
+
+**`deeper_link` nuance:** the pipeline emits `deeper_link: null` literally (it's an `always-null` field for news per `frontmatter.ts:24`). For non-news collections it's `string | null`. The site's schema permits both `string().url().nullable()` for every collection, which is a strict superset of the pipeline's `null`-only emission — pipeline output validates fine, hand-authored skill/glossary content can supply a URL or leave it null.
+
+### S.5 Error handling strategy
+
+Site is static; "errors" are build-time or browser-side, not server-side. The strategy is **fail loud at build, render empty-state at runtime**.
+
+| Error class | When | Strategy | Where it surfaces |
+|---|---|---|---|
+| **Schema validation failure** | `astro sync` parses a frontmatter block that fails its Zod schema. | **Fail loudly.** `astro check` exits non-zero with file path + field name + Zod issue. `npm run build` chains `astro check` (plan R-3) so build fails too. No silent skipping (AC18 / NF8). | Step 3 wires the scripts; Step 11 negative test confirms with `_invalid.md` fixture. |
+| **Empty collection** | `getCollection('skills')` returns `[]` because `../skills/` has only `.gitkeep` (or doesn't exist at all). | **Not an error.** Each catalog page has an `items.length === 0` branch rendering canonical empty-state copy (A8). Per investigation §10c, Astro 5/6 treats missing/empty base directory as empty array; does not error. | Pages in Step 9. |
+| **Missing config file** | Someone deletes `astro.config.mjs` or `content.config.ts`. | **Astro fails to start/build with a clear error.** Loud, expected. No fallback. | Astro core behaviour; no site code needed. |
+| **Cross-workspace path missing** | `glob({ base: '../news/published' })` and the directory does not exist. | Astro logs a warning and the collection is empty. **Not an error.** Empty-state branch handles it. Documented in `site/README.md` (R-7) so contributors aren't surprised. | Step 13 docs. |
+| **`getStaticPaths` slug collision** | Two news items generate the same date-stripped slug. | Astro build throws a duplicate-route error. Caller renames one file. Pipeline's `resolveSlugCollision` (slug.ts) prevents this upstream by appending `-2`, `-3`. Near-zero edge case. | Caught at `npm run build`. Logged as plan risk P-R5. |
+| **`localStorage` unavailable / quota exceeded** | Private browsing mode, full quota. | `AudienceFilter` catches and ignores; falls back to defaults (all three audiences checked). Filter remains usable for the session. | `try { … } catch { /* ignore */ }` wrappers in the inline script. |
+| **Pagefind index missing** | User runs `npm run dev` and clicks search. | Starlight's default behaviour: shows a toast that search needs production build. Not a defect. Demo against `npm run preview`. Documented in `site/README.md`. | Starlight built-in. |
+| **TypeScript strict violation** (e.g., `posts[0].data.title` under `noUncheckedIndexedAccess`) | A coder writes index access on a collection array. | `npm run check` fails with TS2532 / TS18048. Fix: use `.at(0)`, length-guard, or destructure inside `.map()`. Flagged in plan risk P-R6. | Step 7 / Step 9. |
+
+**No silent fallbacks.** The site honours the global rule "never create fallback values for missing configuration." There is no try/catch around `getCollection()` calls that silently substitutes an empty array — Astro already returns `[]` for empty/missing collections, which is the *correct, observable* behaviour (the empty-state branch is a domain choice, not a silenced error).
+
+### S.6 Configuration model
+
+#### S.6.1 `astro.config.mjs` shape
+
+```js
+// site/astro.config.mjs
+import { defineConfig } from 'astro/config'
+import starlight from '@astrojs/starlight'
+
+export default defineConfig({
+  // CLAUDE.md → Ports: dev server pinned to 4321.
+  // CLI flag `--port 4322` is the escape hatch on collision (don't edit this).
+  server: { port: 4321, host: false },
+
+  integrations: [
+    starlight({
+      title: 'NbgAiHub',
+      description: 'A field manual for newcomers to Claude Code.',
+      customCss: ['./src/styles/custom.css'],
+      sidebar: [
+        { label: 'Home', link: '/' },
+        {
+          label: 'Start Here',
+          collapsed: false,
+          items: [
+            { label: 'Day 1', link: '/start-here/day-1/' },
+            { label: 'Week 1 (coming soon)', link: '/start-here/week-1/' },
+          ],
+        },
+        { label: 'News', link: '/news/' },
+        { label: 'Skills', link: '/skills/' },
+        { label: 'Tips & Tricks', link: '/tips/' },
+        { label: 'Glossary', link: '/glossary/' },
+        { label: 'Reference', link: '/reference/' },
+        { label: 'Contribute', link: '/contribute/' },
+      ],
+    }),
+  ],
+})
+```
+
+- **No additional integrations.** MDX is bundled with Starlight; do NOT add `@astrojs/mdx` separately (investigation §11). No Tailwind, no React/Vue/etc., no sitemap, no view transitions.
+- `trailingSlash` is Starlight's default (`'always'`); sidebar `link:` values include trailing slashes to match.
+- Pagefind is enabled by Starlight default — no config knob needed (AC17).
+
+#### S.6.2 `tsconfig.json` shape
+
+```jsonc
+// site/tsconfig.json
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "node_modules"]
+}
+```
+
+- Extends Starlight's recommended preset (which itself extends Astro's strict preset).
+- `noUncheckedIndexedAccess: true` adds the one extra knob NF2 specifies. Other strict-family flags from `pipeline/tsconfig.json` (`exactOptionalPropertyTypes`, `noImplicitOverride`, etc.) are inherited via `astro/tsconfigs/strict` where applicable; we don't second-guess Astro's recommendation here.
+
+#### S.6.3 `content.config.ts` shape
+
+See §S.4 above for the complete file.
+
+#### S.6.4 `package.json` scripts
+
+```jsonc
+{
+  "name": "site",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "check": "astro sync && astro check",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "astro": "^6.0.0",
+    "@astrojs/starlight": "^0.39.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.x.x",
+    "typescript": "^5.x.x"
+  }
+}
+```
+
+- `check` = `astro sync && astro check` per plan R-3 (workaround for the silent-exit wart, language-tools discussion #982).
+- `build` = `astro check && astro build` per plan R-3 (chains schema/TS validation into the build so AC18 / NF8 hold).
+- `start` aliases `dev` for consistency with other workspaces.
+- `typecheck` reuses `astro check` (the canonical TS-only check command in Astro projects is `astro check`).
+- No `lint` script — AC16 is "if configured"; for MVP, `astro check` is the static-analysis surface (plan §4 AC coverage note).
+- No `test` script in MVP per A9.
+
+#### S.6.5 Environment variables
+
+**None.** The site is static and reads no secrets. There is no `.env*` file. No process.env access anywhere in `site/` source.
+
+### S.7 Sidebar navigation structure
+
+The 9-entry sidebar — already shown inline in §S.6.1. Listed here standalone for AC2 evidence:
+
+```js
+sidebar: [
+  { label: 'Home', link: '/' },
+  {
+    label: 'Start Here',
+    collapsed: false,
+    items: [
+      { label: 'Day 1', link: '/start-here/day-1/' },
+      { label: 'Week 1 (coming soon)', link: '/start-here/week-1/' },
+    ],
+  },
+  { label: 'News', link: '/news/' },
+  { label: 'Skills', link: '/skills/' },
+  { label: 'Tips & Tricks', link: '/tips/' },
+  { label: 'Glossary', link: '/glossary/' },
+  { label: 'Reference', link: '/reference/' },
+  { label: 'Contribute', link: '/contribute/' },
+]
+```
+
+- 8 top-level entries + 2 children inside "Start Here" = 9 visible labels in the rendered sidebar (newcomer journey first, catalog second, meta last — A11 order).
+- All entries use `link:` (not `slug:`) because every page in §S.2 is implemented under `src/pages/`, not as a `.md`/`.mdx` page under `src/content/docs/`. The homepage is the one exception (`src/content/docs/index.mdx`), and Starlight is happy to accept `link: '/'` for it.
+- Week 1 link dead-ends to a placeholder page (just so the sidebar entry doesn't 404). The label includes "(coming soon)" so the user isn't surprised.
+- No badges, no icons, no per-entry styling — minimal MVP.
+
+### S.8 Cross-workspace coupling and integration points
+
+**Read-only contract with pipeline:**
+
+| Site reads | Pipeline writes | Contract |
+|---|---|---|
+| `../news/published/*.md` | Editor PR moves files from `news/incoming/` to `news/published/` (pipeline produces `incoming/`; site does not read `incoming/`). | Filenames match `^\d{4}-\d{2}-\d{2}-<slug>\.md$`. Frontmatter matches `NewsFrontmatter` shape exactly. Pipeline's `frontmatter.ts` is the producer of record. |
+| `../skills/*.md` | Hand-authored via PR (no pipeline path today). | Frontmatter matches `baseShape('skill')`. |
+| `../tips/*.md` | Hand-authored via PR. | Frontmatter matches `baseShape('tip')`. |
+| `../glossary/*.md` | Hand-authored via PR. | Frontmatter matches `baseShape('glossary')`. Filename without `.md` is the anchor slug (AC15). |
+| `../journeys/*.md` | Hand-authored via PR. | Frontmatter matches `baseShape('journey-step')`. |
+
+**Schema drift risk:** documented in §S.4 (the news schema is a duplicated mirror of `NewsFrontmatter`). Mitigation: prominent comment block at the top of `content.config.ts` pointing at the pipeline's source-of-truth files. Tracked as a follow-up in `Issues - Pending Items.md` per plan Step 13. Future "shared schema package" extraction possible but explicitly out of MVP scope.
+
+**HMR caveat (plan R-7):** Astro's dev-server file watcher watches the project root (`site/`) and `src/`. Files under sibling folders (`../news/published/*.md`, `../skills/*.md`, etc.) may not trigger hot-reload on edit. Workaround: restart `npm run dev` after content edits. Optional widening of the Vite watcher (`vite.server.watch.ignored`) is a follow-up, not MVP-blocking, because content authoring happens via PR + file write, not live editing during dev. Documented in `site/README.md` per Step 13.
+
+**No code-level dependency on the pipeline workspace.** No `import` ever crosses workspace boundaries. No shared `tsconfig.json` paths. No npm workspace / pnpm / turbo wiring. The two workspaces are siblings that happen to share a frontmatter contract via documentation, not via TypeScript.
+
+**No deploy integration in MVP** (A17). `dist/` is git-ignored. `npm run preview` validates the production output locally without deploying. Hosting decision (OQ1) deferred.
+
+### S.9 Parallel implementation unit assignments
+
+Plan §3 establishes the sequential spine (Steps 1–6 → fan-out Step 7 → Step 8 → Step 9 → Steps 10–12 → Step 13). This section confirms / refines the within-Step-7 parallelization with **strict file-ownership boundaries — no two units write to the same file.**
+
+**Sequential block (no parallelism, single owner):**
+
+| Step | Files owned | Why sequential |
+|---|---|---|
+| 1 | scaffolds the entire `site/` tree | foundational; nothing else can start until it lands |
+| 2 | `.nvmrc`, edits `package.json` (`type`/engines confirm), edits `astro.config.mjs` (server.port) | trivial; piggybacks on Step 1's working tree |
+| 3 | edits `package.json` (scripts block), edits `tsconfig.json` | trivial; piggybacks |
+| 4 | writes `src/content.config.ts` | gates everything below — components and pages can't typecheck without collections |
+| 5 | edits `astro.config.mjs` (sidebar) | piggybacks; small surface |
+| 6 | writes `src/styles/custom.css`, edits `astro.config.mjs` (customCss) | tiny |
+
+**Step 7 fan-out** (after Step 6 lands), 6 components + 1 helper. **Recommended worker assignment** (3 workers, balanced load):
+
+| Worker | Files owned | Depends on | Contract surface respected |
+|---|---|---|---|
+| **A** | `src/lib/news.ts`<br>`src/components/NewsPanel.astro`<br>`src/components/NewsList.astro` | Step 4 (`news` collection); `AudienceBadge` (Worker C) for import resolution at compile time — but since Worker C's contract is the public interface from §S.3.4, Worker A can stub-import `AudienceBadge` before Worker C finishes its body (Astro doesn't typecheck the import target's body to satisfy the import).<br>NOTE: in practice the workers can run truly concurrently because the file boundary is hard; the only sync point is the final `npm run check` in Step 7's exit gate. | §S.3.2, §S.3.3, §S.3.7 |
+| **B** | `src/components/HomeHero.astro`<br>`src/components/AudienceFilter.astro` | Step 6 (CSS classes) | §S.3.1, §S.3.6 |
+| **C** | `src/components/AudienceBadge.astro`<br>`src/components/SkillCard.astro` | Step 4 (`skills` collection); `AudienceBadge` ships first within the worker so `SkillCard` can import it | §S.3.4, §S.3.5 |
+
+**File-ownership invariant:** every file in the matrix is in exactly one row. No two workers write the same file. Cross-worker imports respect the public interfaces in §S.3.x as the only contact surface.
+
+**Step 8** (`index.mdx`) is single-owner; runs after Step 7. Imports `HomeHero` and `NewsPanel` from Workers B and A respectively.
+
+**Step 9 fan-out** (after Step 8 lands), 8 page files. Suggested 3-worker split:
+
+| Worker | Files owned | Depends on |
+|---|---|---|
+| **D** | `src/pages/news/index.astro`<br>`src/pages/news/[slug].astro` | Worker A's `NewsList`, Worker B's `AudienceFilter`, Worker C's `AudienceBadge`; Step 4 `news` collection |
+| **E** | `src/pages/skills.astro`<br>`src/pages/tips.astro`<br>`src/pages/glossary.astro` | Worker B's `AudienceFilter`, Worker C's `SkillCard`, Worker C's `AudienceBadge`; Step 4 collections |
+| **F** | `src/pages/reference.astro`<br>`src/pages/contribute.astro`<br>`src/pages/start-here/day-1.astro`<br>`src/pages/start-here/week-1.astro` | none beyond `StarlightPage` wrapper — hand-authored content, no collection reads |
+
+**Step 10** (seed content under `glossary/`, `journeys/`, plus `.gitkeep`s under `skills/`, `tips/`) is a separate Coder, **runs in parallel with Steps 5–9** as soon as Step 4 (schemas) lands. Files owned: all under `glossary/`, `journeys/`, `skills/`, `tips/` at repo root. No file overlap with site workspace.
+
+**Steps 11–13** are single-owner sequential.
+
+**Critical-path summary** (revisited): Step 1 → 2 → 3 → 4 → (5 ∥ 6 ∥ 10-start) → 7 (3 workers in parallel) → 8 → 9 (3 workers in parallel) → 11 → 12 → 13. Roughly 1 day wall-clock with the parallelization; ~1.5 days sequential.
+
+### S.10 Naming conventions
+
+- **File names:** kebab-case for `.ts`/`.css`/`.md`/`.mdx`/`.json` (`content.config.ts`, `custom.css`, `day-1.md`, `[slug].astro`). PascalCase for `.astro` component files (`HomeHero.astro`, `AudienceBadge.astro`). This matches Astro/Starlight convention and stays distinct from pipeline's pure kebab-case (`frontmatter.ts`, `azure-client.ts`) — the difference is component-vs-module, not project-vs-project.
+- **Astro component names** (the value imported): PascalCase, matching the file (`import HomeHero from '.../HomeHero.astro'`).
+- **Exported function / variable identifiers:** camelCase (`getRecentNews`, `baseShape`, `audienceEnum`).
+- **Type / interface names:** PascalCase (`Props`, `CollectionEntry<'news'>` from Astro core).
+- **CSS class names:** kebab-case with BEM-light modifiers (`.audience-badge`, `.audience-badge--beginner`, `.news-card`, `.news-card-grid`, `.home-hero__cta-row`). Aligns with Astro/Starlight idioms.
+- **Sidebar entry labels:** Title Case with `&` and ampersands literal where they appear in the spec ("Tips & Tricks", not "Tips and Tricks").
+- **Data attributes** used by the audience filter: `data-audience`, `data-topics`, `audience-hidden` (the toggle class).
+- **`localStorage` key:** `nbgaihub.audience` (single, namespaced; no other site state persisted client-side in MVP).
+- **Route paths:** trailing slash always (Starlight default). Sidebar `link:` and internal `<a href>` values include them.
+
+### S.11 Cross-cutting design rules
+
+1. **TypeScript strict** — `noUncheckedIndexedAccess: true` on top of Starlight's strict preset. Components and pages use `.at(0)`, length guards, or destructure-in-`.map()` to satisfy it (plan risk P-R6).
+2. **ESM only** — `"type": "module"` in `site/package.json`. Astro 6 requires it. Matches pipeline.
+3. **No fallback values for missing configuration** — global rule + NF8. Schema violations, missing config files, missing dependencies all fail loudly via `astro check` / `astro build`. The only "silent acceptance" surface is empty collection folders, where Astro itself returns `[]` and the catalog pages branch on `items.length === 0`. That's a domain rendering choice, not a silenced error.
+4. **No premature abstraction** — six components are six files; do not collapse `NewsPanel` and `NewsList` into one parameterised component for MVP (`getRecentNews` already de-duplicates the data fetch). No `<EmptyState>` shared component for MVP; inline the canonical copy in each catalog page (A8). Revisit if/when the same string appears in 4+ places.
+5. **Minimal custom CSS** — `site/src/styles/custom.css` ≤100 LOC per A6. Class-based rules only; no global resets; no Tailwind, no `@apply`, no preprocessor. Defaults from Starlight do the heavy lifting.
+6. **No client islands** — `AudienceFilter` is the only client behaviour and it's a vanilla `<script>` block in an `.astro` component, not a `client:*` directive. No `@astrojs/react` / `vue` / etc. integration.
+7. **No `console.log`** — same convention as pipeline. The audience filter's inline script is fire-and-forget; no logging emitted. Build-time output is owned by Astro.
+8. **No version-control side effects from site code** — site code never invokes `git`, never writes to repo content folders. Read-only contract per refined-request "Constraints".
+9. **No environment variables** — the site is static; no API keys, no runtime config. `.env*` files are not used in `site/`.
+10. **Trailing slash always** — sidebar `link:`, internal `<a href>`, dynamic route slugs (the `getStaticPaths` shape produces `/news/<slug>/index.html` which Starlight serves at `/news/<slug>/`).
+
+### S.12 Verification checklist (design-level)
+
+Reconciliation: every plan-002 reconciliation item maps to a section of this design.
+
+| Plan reconciliation | Realised in design |
+|---|---|
+| R-1 (Astro 6 + Starlight 0.39) | §S.6.4 deps; §S.6.1 config |
+| R-2 (`generateId` for news slugs) | §S.4 news collection definition |
+| R-3 (hardened scripts) | §S.6.4 scripts block |
+| R-4 (homepage as `index.mdx` with `template: splash`) | §S.2 file inventory; §S.3.1 + §S.3.2 mounted by it |
+| R-5 (catalog pages as `.astro` under `src/pages/` wrapped in `StarlightPage`) | §S.2 file inventory; §S.7 sidebar uses `link:`, not `slug:` |
+| R-6 (A9 rationale refresh) | Surface for refined-request edit in plan Step 13; not a contract change |
+| R-7 (HMR caveat) | §S.8 cross-workspace coupling; documented in `site/README.md` at Step 13 |
+
+Every AC1–AC20 from the refined request is addressed by either a contract above or a verification step in plan-002 §4. Cross-reference table (design → AC) below for the load-bearing ones:
+
+| AC | Design anchor |
+|---|---|
+| AC1 | §S.6.4 (versions in `package.json`) |
+| AC2 | §S.7 (sidebar shape) |
+| AC3 | §S.4 (5 `defineCollection` entries) |
+| AC4 | §S.4 (news schema fields) |
+| AC5 / AC6 | §S.6.4 (hardened scripts chain `astro check`) |
+| AC7 | §S.6.1 (server.port pin) |
+| AC8 | §S.7 (9 labels render in sidebar) |
+| AC9 / AC11 | §S.2 (page file inventory) + §S.5 (empty-state) |
+| AC10 | §S.2 (`[slug].astro`) + §S.3.7 (`getStaticPaths` shape) |
+| AC12 | §S.2 (component file inventory) + §S.3.x |
+| AC13 | §S.3.4 (AudienceBadge classes) + §S.2 custom.css |
+| AC14 | §S.3.6 (AudienceFilter inline script) |
+| AC15 | §S.2 (`glossary.astro` anchors via `id={entry.id}`) |
+| AC17 | §S.6.1 (Pagefind default-on) |
+| AC18 | §S.5 (schema-failure strategy) + §S.6.4 (hardened scripts) |
+| AC19 | §S.4 (`hero_image` optional URL) |
+| AC20 | §S.6.4 (dep declarations, no deprecated direct deps) |
+
+---
+
+*End of Site architecture section. The next feature append goes here (`## <next feature> …`).*

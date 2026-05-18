@@ -93,7 +93,7 @@ For full RSS pipeline context, see refined request: `docs/refined-requests/rss-p
     4. Wired AI — `https://www.wired.com/feed/tag/ai/latest/rss`
     5. The Verge — `https://www.theverge.com/rss/index.xml` *(full firehose; LLM filters the non-AI noise)*
   - **Dropped feeds** (2026-05-18, by user direction): Anthropic news (RSS feed deleted by Anthropic — returned 404), Claude Code GitHub releases (`releases.atom`), Simon Willison's blog. The latter two are easy to re-add if signal loss is felt.
-- **Editorial cadence:** daily Action + ad-hoc PR review (current)? Weekly summary PR? Twice-weekly?
+- **Editorial cadence:** daily Action at **05:00 UTC = 08:00 Europe/Athens (DST) / 07:00 (winter)** + ad-hoc PR review (current). Weekly summary PR or twice-weekly cron remain open alternatives. Cron lives at `.github/workflows/rss-triage.yml` line 8 — one-line YAML change to flip.
 - **News storage model:** per-item permanent (current — files accumulate forever) vs rolling N-day window vs hybrid (storage permanent + UI filters)? Currently per-item permanent; UI is unbuilt.
 - **News item hero image:** add `hero_image` frontmatter field, extracted from RSS thumbnail + og:image fallback? Deferred but small to implement.
 

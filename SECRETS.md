@@ -112,7 +112,7 @@ The pipeline is **curated, not auto-aggregated** (DECISIONS.md, 2026-05-18 "Cura
 
 ### Recommended cadence
 
-Open Question OQ2 in `SCOPE.md` owns the final answer. The placeholder is **daily cron at 06:00 UTC** (workflow YAML line `- cron: "0 6 * * *"`) with **weekly editorial review**. Result: ~7 PRs per week, reviewed in one sitting. Flip to daily review if the volume justifies it, or to twice-weekly cron (`0 6 * * 1,4`) if daily is too noisy.
+Open Question OQ2 in `SCOPE.md` owns the final answer. The current schedule is **daily cron at 05:00 UTC** (workflow YAML line `- cron: "0 5 * * *"`), which translates to **08:00 Europe/Athens during DST (UTC+3), 07:00 in winter (UTC+2)**. GH Actions cron is UTC-only — no DST handling. Editorial review cadence remains **weekly** for the moment. Result: ~7 PRs per week, reviewed in one sitting. Flip to twice-weekly cron (`0 5 * * 1,4`) if daily volume feels noisy.
 
 ---
 

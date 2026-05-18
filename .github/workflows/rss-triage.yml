@@ -1,11 +1,12 @@
 name: rss-triage
 
 # Triggers (AC1): daily cron + manual dispatch.
-# Cron is a placeholder per Assumption A2 — flipping cadence (weekly,
-# twice-weekly, etc.) means changing this single line, not the code.
+# GH Actions cron is UTC-only and does not follow DST. The schedule below
+# targets 08:00 Europe/Athens during DST (UTC+3) — i.e. 07:00 Athens in
+# winter. Flipping cadence means changing this single line, not the code.
 on:
   schedule:
-    - cron: "0 6 * * *"        # A2 placeholder — daily 06:00 UTC
+    - cron: "0 5 * * *"        # daily 05:00 UTC = 08:00 Athens (DST) / 07:00 (winter)
   workflow_dispatch: {}
 
 # Workflow-scoped GITHUB_TOKEN permissions (AC18).

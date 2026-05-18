@@ -289,6 +289,23 @@ The REJECT list was extended in the same edit to keep the categories tight: now 
 
 ---
 
+## 2026-05-18 — RSS cron pinned to 05:00 UTC (= 08:00 Europe/Athens DST)
+
+**Decision:** Daily cron changed from `0 6 * * *` (06:00 UTC) to `0 5 * * *` (05:00 UTC). At today's date (2026-05-18, DST active in Athens, UTC+3) this lands at **08:00 Europe/Athens**. In winter (Athens UTC+2) it will land at 07:00 Athens.
+
+**Why:** User asked for the PR to be ready at 8am their local time. GH Actions cron is UTC-only and does not follow DST — we pin one fixed UTC time and accept the one-hour drift between summer and winter. Picking summer-DST as the anchor was deliberate: the project is in active development now, so "feels right" matters more than the winter-correctness it would have if we picked the winter offset.
+
+**Alternatives considered:**
+- 8am UTC fixed (rejected: lands at 11am Athens summer — too late for "PR ready at start of day").
+- Use a third-party scheduler that respects timezone (rejected: extra infra for a one-line cron change).
+- Run twice (once for winter, once for summer with overlapping disabled) (rejected: over-engineered for a one-hour drift).
+
+**Synced documents:** workflow YAML, CLAUDE.md repo-layout table, SCOPE.md "Editorial cadence" line, SECRETS.md cadence section, project-design.md ASCII diagram + YAML snippet, project-functions.md F1 description. Historical artifacts (refined-requests, phase plans, investigation, integration-verification, code-review, codebase-scans) deliberately left unchanged — they are point-in-time snapshots.
+
+**Status:** accepted; deployed via the same commit as the feed-list pivot below.
+
+---
+
 ## 2026-05-18 — RSS feed list pivot + source-group prompt + confidence tuning
 
 **Decision:** Three coupled changes to the RSS pipeline, applied together:

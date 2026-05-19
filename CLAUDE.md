@@ -24,35 +24,43 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 ├── SECRETS.md                 ← operator setup checklist
 ├── Issues - Pending Items.md  ← per global rules
 ├── config/
-│   └── rss-sources.json       ← data-driven feed list (currently 5: 2 Reddit + HN + Wired + Verge)
+│   ├── rss-sources.json       ← data-driven feed list (currently 5: 2 Reddit + HN + Wired + Verge)
+│   └── maintainers.json       ← team_aliases allowlist consumed by the skill-validator tool
 ├── news/
 │   ├── incoming/              ← Action writes triaged items here, PR opens for review
 │   └── published/             ← editor moves approved items here (permanent archive)
 ├── glossary/                  ← 5 seeded terms (claudemd, mcp, skill, plugin, agent)
-├── skills/                    ← .gitkeep — catalog content TBD
+├── skills/                    ← .gitkeep — catalog content TBD (extended schema lives in site/src/content.config.ts)
 ├── tips/                      ← .gitkeep — content TBD
 ├── journeys/                  ← day-1.md placeholder (6-step content TBD)
-├── pipeline/                  ← TypeScript workspace for the RSS Action
+├── pipeline/                  ← TypeScript workspace for the RSS Action + skill validator
 │   ├── package.json           ← Node 22, ESM, vitest 4.x, @rowanmanning/feed-parser
-│   ├── src/                   ← 15 modules: env, azure-client, fetch, parse, dedup,
-│   │                            triage, slug, frontmatter, write, pr, etc.
-│   └── tests/                 ← 14 test files, 93 tests (after editor_confidence tightening)
+│   ├── src/                   ← 15 RSS modules + src/validators/ (skill, cli, config)
+│   │   └── validators/        ← skill-validator tool (see docs/tools/skill-validator.md)
+│   └── tests/                 ← 15 test files, 112 tests (101 RSS + 11 validator)
 ├── site/                      ← Astro 6 + Starlight 0.39 web UI workspace
-│   ├── package.json           ← Node 22, ESM, astro ^6, @astrojs/starlight ^0.39
-│   ├── astro.config.mjs       ← sidebar 9 entries, dev port 4321
-│   ├── src/content.config.ts  ← 5 content collections via Astro 5 glob() loader
-│   ├── src/components/        ← 7 .astro components (Hero, NewsPanel, NewsList,
-│   │                            AudienceBadge, SkillCard, AudienceFilter, ConfidenceChip)
+│   ├── package.json           ← Node 22, ESM, astro ^6, @astrojs/starlight ^0.39, vitest 4.x
+│   ├── astro.config.mjs       ← sidebar 11 entries (My Pins + Submit a Skill added), SocialIcons override, dev port 4321
+│   ├── vitest.config.ts       ← Vitest 4.x node-env, tests/**/*.test.ts pattern
+│   ├── src/content.config.ts  ← 5 content collections; skills schema extended with 7 new fields
+│   ├── src/components/        ← 10 .astro components: original 7 + PinButton, SignInModal, SocialIconsOverride
+│   ├── src/lib/               ← 8 TS modules: news, slug, auth, api-fetch, gist, submission, skill-types, pin-store
 │   ├── src/pages/             ← /news, /skills, /tips, /glossary, /reference,
-│   │                            /contribute, /start-here/day-1, /start-here/week-1
-│   └── src/content/docs/      ← index.mdx (homepage, template:splash)
+│   │                            /contribute, /start-here/day-1, /start-here/week-1,
+│   │                            /my-pins, /submit-skill (the personalization pages)
+│   ├── src/content/docs/      ← index.mdx (homepage, template:splash)
+│   ├── scripts/               ← build-pin-index.ts (pre-build step emitting public/_data/<type>-index.json)
+│   ├── public/_data/          ← build-emitted JSON indices (5 files, one per content type)
+│   └── tests/                 ← 7 test files, 127 tests (auth, api-fetch, gist, submission, pin-store, build-pin-index, slug)
 ├── .github/workflows/
-│   └── rss-triage.yml         ← daily cron 05:00 UTC = 08:00 Athens (DST) + workflow_dispatch
+│   ├── rss-triage.yml         ← daily cron 05:00 UTC = 08:00 Athens (DST) + workflow_dispatch
+│   └── validate-skill-submission.yml ← PR-on-skills/**/*.md → CI validator → GH Actions annotations
 └── docs/
-    ├── design/                ← project-design.md (§1-S.12), plan-001 (RSS), plan-002 (site)
-    ├── reference/             ← code-review, dep-validation, integration-verification (RSS + site),
-    │                            codebase-scans, investigations
-    └── refined-requests/      ← refined specs (rss-pipeline.md, astro-starlight-site.md)
+    ├── design/                ← project-design.md (§1-S.12 + §P.1-P.13 personalization), plan-001/002/003
+    ├── reference/             ← code-review, dep-validation, integration-verification, test-build,
+    │                            codebase-scans, investigations, gist-contract.md
+    ├── refined-requests/      ← refined specs (rss-pipeline, astro-starlight-site, personalization-and-contributions)
+    └── tools/                 ← per-tool docs per global CLAUDE.md convention (skill-validator.md)
 ```
 
 ## Working rules for this project

@@ -1,0 +1,55 @@
+# docs-drift — keep documentation count claims honest.
+#
+# Runs `node scripts/sync-doc-counts.mjs --check` on every PR and push to main.
+# Fast path (default): file-count-only check, exits in seconds.
+# Full path (scheduled weekly): also runs `--with-tests` to verify test-count claims.
+
+name: docs-drift
+
+on:
+  pull_request:
+    paths:
+      - "SCOPE.md"
+      - "CLAUDE.md"
+      - "glossary/**"
+      - "tips/**"
+      - "skills/**"
+      - "journeys/**"
+      - "news/published/**"
+      - "scripts/sync-doc-counts.mjs"
+      - ".github/workflows/docs-drift.yml"
+  push:
+    branches: [main]
+  schedule:
+    # Weekly full check (also covers test-count drift) — Monday 04:00 UTC.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      with_tests:
+        description: "Also verify test counts (slower — installs workspace deps)"
+        type: boolean
+        default: false
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Fast drift check (file counts only)
+        if: github.event_name != 'schedule' && github.event.inputs.with_tests != 'true'
+        run: node scripts/sync-doc-counts.mjs --check
+
+      - name: Install workspace deps (for full check)
+        if: github.event_name == 'schedule' || github.event.inputs.with_tests == 'true'
+        run: |
+          cd pipeline && npm ci --silent
+          cd ../site && npm ci --silent
+          cd ../plugin && npm ci --silent
+
+      - name: Full drift check (file + test counts)
+        if: github.event_name == 'schedule' || github.event.inputs.with_tests == 'true'
+        run: node scripts/sync-doc-counts.mjs --check --with-tests

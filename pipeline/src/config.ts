@@ -93,6 +93,17 @@ export async function loadConfig(
       );
     }
 
+    // DECISIONS 2026-05-21: per-feed fetch+parse mode. No fallback per project
+    // rule — missing or unknown value is a schema error. Forces feed authors
+    // to declare explicitly whether the endpoint is XML or Reddit JSON.
+    const type = obj["type"];
+    if (type !== "rss" && type !== "reddit-json") {
+      throw new ConfigSchemaError(
+        `rss-sources.json[${i}].type`,
+        'must be "rss" or "reddit-json"',
+      );
+    }
+
     // Variant C (DECISIONS 2026-05-19): per-feed auto-promote flag. No
     // fallback — missing or non-boolean is a schema error. Forces every feed
     // author to make the policy call explicitly.
@@ -104,7 +115,7 @@ export async function loadConfig(
       );
     }
 
-    out.push({ name, url, enabled, auto_promote_eligible: autoPromoteEligible });
+    out.push({ name, url, type, enabled, auto_promote_eligible: autoPromoteEligible });
   }
 
   return out;

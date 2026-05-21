@@ -25,6 +25,12 @@ import { loadConfig } from "./config.js";
 import { dedupByTitle, loadSeenFingerprints } from "./dedup.js";
 import { fetchFeedXml, FeedFetchError } from "./fetch.js";
 import { parseFeed, FeedParseError } from "./parse.js";
+import { parseRedditJson } from "./parse-reddit.js";
+import {
+  applyRedditEngagementFilter,
+  REDDIT_MIN_SCORE,
+  REDDIT_MIN_COMMENTS,
+} from "./reddit-filter.js";
 import { computeFingerprint } from "./fingerprint.js";
 import { resolveSlugCollision, slugify } from "./slug.js";
 import { triageItem, MalformedTriageResponseError } from "./triage.js";
@@ -129,8 +135,13 @@ export async function run(options: RunOptions = {}): Promise<RunResult> {
   const feedResults = await Promise.allSettled(
     enabled.map(async (feed): Promise<FeedOutcome> => {
       try {
-        const xml = await fetchFeedXml(feed.url, fetchImpl);
-        const items = parseFeed(feed.name, xml);
+        // fetchFeedXml is a generic body-fetcher; the name is historical
+        // (XML-only days). Reddit JSON rides the same code path.
+        const body = await fetchFeedXml(feed.url, fetchImpl);
+        const items =
+          feed.type === "reddit-json"
+            ? parseRedditJson(feed.name, body)
+            : parseFeed(feed.name, body);
         return { ok: true, feed, items };
       } catch (err) {
         if (err instanceof FeedFetchError || err instanceof FeedParseError) {
@@ -148,8 +159,32 @@ export async function run(options: RunOptions = {}): Promise<RunResult> {
     if (result.status === "fulfilled") {
       const outcome = result.value;
       if (outcome.ok) {
-        successes.push({ feed: outcome.feed, items: outcome.items });
-        logger.info("feed_succeeded", { name: outcome.feed.name, itemsFetched: outcome.items.length });
+        // DECISIONS 2026-05-21: Reddit feeds get an engagement pre-filter
+        // (drop stickies + score>=50 + num_comments>=10) BEFORE dedup, so
+        // the Azure budget doesn't get spent on low-engagement noise. Other
+        // feed types pass through unchanged.
+        let items = outcome.items;
+        if (outcome.feed.type === "reddit-json") {
+          const { kept, dropped } = applyRedditEngagementFilter(items);
+          const counts: Record<string, number> = {};
+          for (const d of dropped) {
+            counts[d.reason] = (counts[d.reason] ?? 0) + 1;
+          }
+          logger.info("reddit_engagement_filtered", {
+            feed: outcome.feed.name,
+            inputCount: items.length,
+            keptCount: kept.length,
+            droppedCount: dropped.length,
+            droppedByReason: counts,
+            thresholds: {
+              min_score: REDDIT_MIN_SCORE,
+              min_comments: REDDIT_MIN_COMMENTS,
+            },
+          });
+          items = kept;
+        }
+        successes.push({ feed: outcome.feed, items });
+        logger.info("feed_succeeded", { name: outcome.feed.name, itemsFetched: items.length });
       } else {
         failures.push({ name: outcome.feed.name, reason: outcome.reason });
         logger.warn("feed_failed", { name: outcome.feed.name, reason: outcome.reason });

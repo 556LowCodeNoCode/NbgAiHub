@@ -561,3 +561,129 @@ The pipeline now emits four step outputs on `$GITHUB_OUTPUT`: `new_items`, `auto
 - Date-tag everything and let the site filter at render time (rejected — files keep accumulating, repo bloats; site builds slower over time).
 - Configurable retention via a new config file or env var (deferred — YAGNI; revisit if the policy gets renegotiated).
 **Implementation evidence:** `pipeline/src/retention.ts` (parseFileDate, isStale, findStalePublished, pruneStalePublished); `pipeline/src/index.ts` calls pruning after the write loop and emits `pruned_count` + `had_changes` step outputs; `.github/workflows/rss-triage.yml` direct-push branch fires on `had_changes == true` (was `mode == auto_only`), and the commit message includes both counts ("N auto-promoted, P pruned"); `pipeline/tests/retention.test.ts` with 16 tests. Pipeline tests grow 145 → 161.
+
+---
+
+## 2026-05-19 — UI redesign: Option 1 hybrid + Linear/Vercel/Stripe aesthetic + portability hedge for Option 2
+
+**Decision:** Keep Starlight as the framework; deeply theme it via a three-tier CSS custom-property token system; build bespoke layouts for the 11 marketing surfaces using Starlight's `splash` template wrapped in a single `MarketingShell.astro`; deep theme override for MDX content detail pages via `--sl-color-*` token aliases that Starlight already pipes through to Pagefind. Aesthetic anchor: **Linear / Vercel / Stripe** — Apple-influenced restraint, dark-mode-first, monospace accents, expressive typography, subtle gradients, scroll-driven motion. Portability hedge: 16 primitives under `site/src/components/primitives/` are Starlight-free (verified by `grep -r '@astrojs/starlight' site/src/components/primitives/` returning zero hits) so an escalation to Option 2 (replace Starlight entirely) only needs to rebuild `MarketingShell.astro`, not the design system underneath.
+
+**Alternatives considered:**
+- **Option 2 — replace Starlight with custom Astro pages.** Rejected as first attempt because (a) larger blast radius on iteration, (b) loss of free upstream Starlight upgrades (sidebar, search, dark-mode, a11y, MDX), (c) Option 1's bespoke marketing surfaces under splash-template + deep theme on content pages was judged to satisfy the brief at meaningfully lower cost. Escalation gate after Phase 6 (user evaluation at localhost:4321) — Option 2 remains live if Option 1's output isn't satisfying.
+- **Pure CSS theming, no bespoke layouts.** Rejected because the homepage and pillar landings need full-bleed editorial layouts that Starlight's default doc grid resists.
+- **Adopt a utility framework (Tailwind / UnoCSS).** Rejected — pure CSS custom properties + Cascade Layers covers the design ceiling without adding a build dependency. See investigation-ui-redesign.md Axis 1.
+- **Add a motion library (`motion` / `gsap`).** Rejected — CSS transitions + native `IntersectionObserver` (~50 LOC) deliver the Linear/Vercel-style motion ceiling. See investigation-ui-redesign.md Axis 3.
+- **Direct `@fontsource-variable/*` imports.** Rejected in favor of Astro's stable Fonts API (`fontProviders.fontsource()`) — same payload, ~80 fewer lines of boilerplate, free metric-adjusted fallbacks. See docs/research/astro-fonts-api-experimental-stability.md.
+
+**Inputs:**
+- docs/refined-requests/ui-redesign.md (39 ACs, 18 assumptions, 14-item DoD)
+- docs/reference/investigation-ui-redesign.md (10 execution axes)
+- docs/research/astro-fonts-api-experimental-stability.md
+- docs/research/pagefind-ui-variant-in-starlight-0-39.md
+- docs/design/plan-004-ui-redesign.md
+- docs/design/project-design.md §S.13 (the design contract)
+- docs/reference/code-review-ui-redesign.md (READY verdict, 3 minor fixes during review)
+- docs/reference/integration-verification-ui-redesign.md (39/39 ACs MET, 14/14 DoD met, 174/174 tests, 28 pages built, 0 errors)
+
+**Cost / outcome:**
+- 1 new file in `docs/refined-requests/`, 1 new plan, 2 research docs, 1 codebase scan, 1 investigation, 3 test-build reports, 1 code-review report, 1 dependency-validation report, 1 integration-verification report — all under `docs/`.
+- 47 site files changed (22 modified, 22+ new, 1 deleted).
+- 0 new npm dependencies. 0 deprecations. 0 vulnerabilities.
+- Test floor 127 → 174 (zero regressions; only additions).
+- Bundle: ~143 KB CSS, ~393 KB woff2.
+
+**Portability evidence (so an escalation to Option 2 isn't wasted work):**
+- `grep -r '@astrojs/starlight' site/src/components/primitives/` → zero hits.
+- `MarketingShell.astro` is the only file in `site/src/components/` that imports Starlight (the `StarlightPage` outer wrapping the splash template).
+- Token system, primitive components, motion utility, content-prose/chrome stylesheets are all Starlight-agnostic in their internals.
+
+---
+
+## 2026-05-19 — Unified header via Starlight `Header` override (supersedes 2026-05-14 §S.13.14.3)
+
+**Decision:** Reverse the 2026-05-14 "Header override rejected as fragile" call. Override Starlight's `Header` component with `site/src/components/SplashAwareHeader.astro`. The override reads `Astro.locals.starlightRoute.entry.data.template`. On `'splash'` (every marketing surface) it renders **one** unified `<nav class="nbg-topnav">` containing brand + section links + Pagefind `<Search />` trigger + `<AuthControls />` (Sign in XOR signed-in chip) + `<ThemeSelect />` + mobile drawer + `<SignInModal />` mount. On non-splash (content-detail) pages it renders the default Starlight Header markup verbatim, keeping `SocialIconsOverride` slotted in.
+
+**Why:** Before this change, MarketingShell rendered its own `nbg-topnav` INSIDE Starlight's content slot. Starlight's chrome header still rendered on top. Result on every marketing page: two stacked navigation bars, with "NbgAiHub" appearing twice, the section links visually disconnected from the search/auth/theme controls, and an auth-state CSS bug (see next entry) showing Sign in + user chip simultaneously. The user flagged this directly: *"the main navi on top as a top pane and then we have additional navi as breadcrumbs ... NBG AI Hub repeated"*. A single coherent header is what Linear/Vercel/Stripe do and is the right target for the redesign's aesthetic anchor.
+
+**Why the 2026-05-14 rejection no longer applies:** the override is *narrow* — one conditional branch, one DOM tree, no behavioral wrappers around Starlight components. It reuses Starlight's own `Search` and `ThemeSelect` via `virtual:starlight/components/*` imports, so Starlight upgrades only break this file if those components' public surface changes (rare and noisy when it does). The fragility cost is real but small; the visual cost of two stacked navs is large.
+
+**Alternatives considered:**
+- **Quick CSS fix — drop the brand block from MarketingShell's nav** (rejected: two bars remain, just less visually duplicated).
+- **CSS `html:not([data-has-sidebar]) .header { display: none }`** (rejected: indirect, leaves dead DOM, doesn't solve where the section links live).
+- **Keep MarketingShell's nav and accept double chrome** (rejected: that's the bug we're fixing).
+
+**Implementation footprint:**
+- New: `site/src/components/SplashAwareHeader.astro` (~430 LOC — splash branch + non-splash branch + drawer JS + default-chrome CSS copy + unified-nav CSS).
+- New: `site/src/components/AuthControls.astro` (~225 LOC — extracted from SocialIconsOverride; ships with the `[hidden]` CSS fix).
+- New: `site/src/env.d.ts` — ambient declarations for five `virtual:starlight/components/*` modules.
+- Changed: `site/src/components/MarketingShell.astro` — stripped of its inline `nbg-topnav` markup (was ~430 LOC, now ~145 LOC).
+- Changed: `site/src/components/SocialIconsOverride.astro` — reduced to a thin `<AuthControls /> + <SignInModal />` wrapper that short-circuits on splash pages.
+- Changed: `site/astro.config.mjs` — added `Header: './src/components/SplashAwareHeader.astro'` override.
+- Design contract: §S.13.6 updated; new §S.13.6.1 (unified header) and §S.13.6.2 (auth CSS fix) added in `docs/design/project-design.md`.
+- Tests: build-output.test.ts gained 41 assertions (4 per marketing page × 10 surfaces + 1 CSS-rule presence check). 215/215 passing.
+
+**Status:** accepted; in-session implementation 2026-05-19. User verification at localhost:4321 is the final gate.
+
+---
+
+## 2026-05-19 — Auth-state mutual exclusion CSS rule (paired with unified header)
+
+**Decision:** Add a paired CSS rule that forces `[hidden]` to actually hide `.nbg-auth__signin` and `.nbg-auth__chip` when their JS-driven `hidden` attribute is set:
+
+```css
+.nbg-auth__signin[hidden],
+.nbg-auth__chip[hidden] {
+  display: none !important;
+}
+```
+
+**Why:** Both variants render in the DOM at SSR time; a small client script flips `element.hidden` based on `auth.readToken()` to pick the active one. But the author CSS for both classes was `display: inline-flex`, same specificity as `[hidden]` and later in source order, so author CSS won and the UA's `[hidden] { display: none }` default never fired. Result on every page after a sign-in: both the "Sign in" button AND the "@chomovazuzana | Sign out" chip rendered visible at the same time. User flagged this in the same session as the unified-header issue.
+
+**Where the rule lives:** inside `AuthControls.astro`'s `<style>` block, at `@layer nbg.components`. Build-output test asserts the compiled CSS contains the rule (allowing for Astro's `:where(.astro-XXX)` scope-class wrapping and lightningCSS minification).
+
+**Status:** accepted; verified via test.
+
+---
+
+## 2026-05-21 — Reddit feeds switch to JSON endpoint + engagement floor + later cron
+
+**Decision:** Three coupled changes to the RSS pipeline, scoped to Reddit feeds only:
+
+1. **Endpoint switch.** `r/ClaudeAI` and `r/ClaudeCode` move from `https://www.reddit.com/r/<sub>/.rss` to `https://www.reddit.com/r/<sub>/new.json?limit=25`. HN / Wired / Verge stay on their existing RSS / Atom URLs.
+2. **Engagement pre-filter** for `reddit-json` feeds, applied AFTER parse and BEFORE dedup/triage:
+   - drop `stickied === true`
+   - require `score >= 50`
+   - require `num_comments >= 10`
+   Both score AND comment floors must clear (AND, not OR). Items below either floor are logged and dropped before any Azure call.
+3. **Cron shift.** `.github/workflows/rss-triage.yml` cron from `0 5 * * *` (05:00 UTC = 08:00 Athens DST) to `0 22 * * *` (22:00 UTC = 00:00 Athens winter / 01:00 Athens DST).
+
+**Why:**
+
+- *Atom has no engagement signal.* Reddit's `.rss` carries title / link / body / dates only — no `score`, `num_comments`, `upvote_ratio`, or `stickied` flag. The JSON endpoint exposes all four. There is no way to filter by community engagement without leaving RSS.
+- *"Too much Reddit noise per run"* — observed by user 2026-05-21. The community filter (upvotes + replies) is doing free work for us; the LLM triage was carrying load it shouldn't have to. Sampling live feeds at decision time, both subreddits' 25-item windows averaged ~1 surviving post each under (score>=50 AND comments>=10) — a deliberately tight floor.
+- *Stickies leak forever.* Reddit pins old posts (e.g. r/ClaudeCode's "Community Feedback" pinned 2025-10-24 was still appearing in the feed at 2026-05-21). Once such a post falls off the 7-day retention window in `news/published/`, our dedup would re-ingest it on the next run. The sticky filter kills this class of leakage at fetch time.
+- *Both floors required, not just score.* Score alone catches viral noise; comments alone catch high-engagement announcements without substance. Together they isolate the field-report / discussion pattern the hub wants (substantive + community-validated).
+- *Cron shift gives previous-day posts time to ripen.* The strict thresholds favor posts that have accumulated engagement. At 05:00 UTC, most posts in the 25-item window were <12h old and hadn't crossed the floor yet. At 22:00 UTC (Athens midnight wintertime), posts from the previous afternoon/evening have had ~8–12h to accumulate, dramatically increasing the survivor rate without loosening the floor.
+
+**Alternatives considered:**
+
+- *`/top.json?t=day` endpoint* — Reddit pre-sorts by score. Simpler in code, but loses visibility into posts that land late in the day. Rejected: we want our own thresholds, not Reddit's ranking.
+- *Score floor only (no comment floor)* — too permissive; lets through high-upvote announcement posts that don't spark discussion. The hub values discussion-grade content.
+- *Per-feed volume cap (top N items per Reddit feed)* — orthogonal to engagement; would mask the underlying signal. Rejected per "trust thresholds, no cap" decision.
+- *48h age guard* — belt-and-braces against stale leakage. Made redundant by the explicit `stickied === false` check + the fact that `/new.json` is sorted by recency; all non-sticky items are <24h old by definition.
+- *Layer engagement onto auto-promote.ts* — would double-gate (engagement → triage → engagement). Rejected: thresholds gate ingestion, triage gates quality, auto-promote gates publishing — three different jobs, three different gates.
+- *Hardcoded thresholds vs. per-feed config* — chose hardcoded constants (`REDDIT_MIN_SCORE`, `REDDIT_MIN_COMMENTS` in `pipeline/src/reddit-filter.ts`) over a `reddit_thresholds` config block. Uniform policy across both subs, minimal config surface, trivially liftable to config later if per-sub tuning becomes useful.
+
+**Where the code lives:**
+
+- New: `pipeline/src/parse-reddit.ts` (~90 LOC — JSON listing → `FeedItem[]` with `reddit.{score, num_comments, stickied}` populated).
+- New: `pipeline/src/reddit-filter.ts` (~60 LOC — `applyRedditEngagementFilter(items)` + exported `REDDIT_MIN_SCORE = 50`, `REDDIT_MIN_COMMENTS = 10` constants).
+- Changed: `pipeline/src/types.ts` — `FeedSource` gains required `type: "rss" | "reddit-json"` (no fallback per global rule); `FeedItem` gains optional `reddit` block.
+- Changed: `pipeline/src/config.ts` — validates `type`; rejects missing / unknown values with `ConfigSchemaError`.
+- Changed: `pipeline/src/index.ts` — branches on `feed.type` during parse; applies engagement filter per Reddit feed; logs `reddit_engagement_filtered` with `keptCount` / `droppedByReason` so editorial drift is visible in workflow logs.
+- Changed: `config/rss-sources.json` — switched 2 Reddit URLs to `/new.json?limit=25`; added `type` to all 5 entries.
+- Changed: `.github/workflows/rss-triage.yml` — cron `0 5 * * *` → `0 22 * * *`.
+- Tests: new `parse-reddit.test.ts` (11 tests) + `reddit-filter.test.ts` (11 tests) + `reddit-new.json` fixture; updated existing config / orchestrator / auto-promote tests for the new required `type` field. 187/187 passing.
+
+**Status:** accepted; in-session implementation 2026-05-21. Operational effect (Reddit volume drop, sticky leakage gone) visible from the first cron run at 22:00 UTC tonight.
+

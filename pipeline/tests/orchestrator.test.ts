@@ -80,8 +80,8 @@ describe("orchestrator.run", () => {
   it("continues after individual feed failure (AC6)", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: false },
-        { name: "Bad", url: "https://bad.example/feed.xml", enabled: true, auto_promote_eligible: false },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
+        { name: "Bad", url: "https://bad.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
     });
     const fetchImpl = vi.fn(async (url: string) => {
@@ -118,8 +118,8 @@ describe("orchestrator.run", () => {
   it("exits non-zero (and throws AllFeedsFailedError) when all feeds fail", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Bad1", url: "https://bad1.example/feed.xml", enabled: true, auto_promote_eligible: false },
-        { name: "Bad2", url: "https://bad2.example/feed.xml", enabled: true, auto_promote_eligible: false },
+        { name: "Bad1", url: "https://bad1.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
+        { name: "Bad2", url: "https://bad2.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
     });
     const fetchImpl = vi.fn(async () => new Response("err", { status: 500 }));
@@ -144,7 +144,7 @@ describe("orchestrator.run", () => {
   it("exits non-zero with empty config (no enabled feeds)", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "X", url: "https://x.example/feed.xml", enabled: false, auto_promote_eligible: false },
+        { name: "X", url: "https://x.example/feed.xml", type: "rss", enabled: false, auto_promote_eligible: false },
       ]),
     });
     const { client } = makeMockClient({});
@@ -167,7 +167,7 @@ describe("orchestrator.run", () => {
   it("empty-run produces no commits and sets new_items=false", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: false },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
       "/runner/output": "",
     });
@@ -231,7 +231,7 @@ describe("orchestrator.run", () => {
 
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: false },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
       "/repo/news/incoming/2026-05-17-old.md": seenMd,
     });
@@ -265,8 +265,8 @@ describe("orchestrator.run", () => {
   it("emits NF6 log lines for feeds attempted, feeds failed, items fetched, items deduped, items written", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: false },
-        { name: "Bad", url: "https://bad.example/feed.xml", enabled: true, auto_promote_eligible: false },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
+        { name: "Bad", url: "https://bad.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
     });
     const fetchImpl = vi.fn(async (url: string) => {
@@ -299,7 +299,7 @@ describe("orchestrator.run", () => {
   it("writes pr-body.md when at least one item is emitted", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: false },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
     });
     const fetchImpl = vi.fn(async () => new Response(atom, { status: 200 }));
@@ -327,7 +327,7 @@ describe("orchestrator.run", () => {
   it("auto-promotes high-confidence items from eligible feeds to news/published/", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: true },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: true },
       ]),
       "/runner/output": "",
     });
@@ -379,7 +379,7 @@ describe("orchestrator.run", () => {
   it("routes high-confidence items from INELIGIBLE feeds to news/incoming/", async () => {
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: false },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
       "/runner/output": "",
     });
@@ -425,7 +425,7 @@ describe("orchestrator.run", () => {
     // including medium / low confidence ones.
     const memFsObj = memFs({
       "/repo/config/rss-sources.json": JSON.stringify([
-        { name: "Good", url: "https://good.example/feed.xml", enabled: true, auto_promote_eligible: true },
+        { name: "Good", url: "https://good.example/feed.xml", type: "rss", enabled: true, auto_promote_eligible: true },
       ]),
       "/runner/output": "",
     });

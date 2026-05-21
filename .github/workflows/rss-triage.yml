@@ -2,11 +2,13 @@ name: rss-triage
 
 # Triggers (AC1): daily cron + manual dispatch.
 # GH Actions cron is UTC-only and does not follow DST. The schedule below
-# targets 08:00 Europe/Athens during DST (UTC+3) — i.e. 07:00 Athens in
-# winter. Flipping cadence means changing this single line, not the code.
+# targets midnight Athens (wintertime UTC+2). DECISIONS 2026-05-21: shifted
+# from 05:00 UTC so the previous day's Reddit posts have had a full evening
+# to accumulate score / comments and clear the engagement floor in
+# reddit-filter.ts (score>=50, comments>=10).
 on:
   schedule:
-    - cron: "0 5 * * *"        # daily 05:00 UTC = 08:00 Athens (DST) / 07:00 (winter)
+    - cron: "0 22 * * *"       # daily 22:00 UTC = 00:00 Athens (winter) / 01:00 Athens (DST)
   workflow_dispatch: {}
 
 # Workflow-scoped GITHUB_TOKEN permissions (AC18).

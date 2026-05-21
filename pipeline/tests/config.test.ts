@@ -27,6 +27,7 @@ describe("config.loadConfig", () => {
       expect(typeof s.url).toBe("string");
       expect(typeof s.enabled).toBe("boolean");
       expect(typeof s.auto_promote_eligible).toBe("boolean");
+      expect(["rss", "reddit-json"]).toContain(s.type);
     }
   });
 
@@ -38,6 +39,16 @@ describe("config.loadConfig", () => {
     expect(eligible.get("Hacker News frontpage")).toBe(true);
     expect(eligible.get("Wired AI")).toBe(true);
     expect(eligible.get("The Verge")).toBe(true);
+  });
+
+  it("real seed routes Reddit feeds through the JSON parser (DECISIONS 2026-05-21)", async () => {
+    const sources = await loadConfig(REPO_CONFIG);
+    const byName = new Map(sources.map((s) => [s.name, s]));
+    expect(byName.get("r/ClaudeAI")?.type).toBe("reddit-json");
+    expect(byName.get("r/ClaudeCode")?.type).toBe("reddit-json");
+    expect(byName.get("Hacker News frontpage")?.type).toBe("rss");
+    expect(byName.get("Wired AI")?.type).toBe("rss");
+    expect(byName.get("The Verge")?.type).toBe("rss");
   });
 
   it("loads the valid fixture file with both enabled and disabled entries", async () => {
@@ -52,12 +63,12 @@ describe("config.loadConfig", () => {
   it("supports adding entries by editing only the JSON (memfs simulation)", async () => {
     const fs = memFs({
       "/cfg/rss-sources.json": JSON.stringify([
-        { name: "A", url: "https://a.example.com", enabled: true, auto_promote_eligible: true },
-        { name: "B", url: "https://b.example.com", enabled: true, auto_promote_eligible: false },
-        { name: "C", url: "https://c.example.com", enabled: false, auto_promote_eligible: false },
-        { name: "D", url: "https://d.example.com", enabled: true, auto_promote_eligible: true },
-        { name: "E", url: "https://e.example.com", enabled: true, auto_promote_eligible: false },
-        { name: "F", url: "https://f.example.com", enabled: true, auto_promote_eligible: true },
+        { name: "A", url: "https://a.example.com", type: "rss", enabled: true, auto_promote_eligible: true },
+        { name: "B", url: "https://b.example.com", type: "rss", enabled: true, auto_promote_eligible: false },
+        { name: "C", url: "https://c.example.com", type: "rss", enabled: false, auto_promote_eligible: false },
+        { name: "D", url: "https://d.example.com", type: "rss", enabled: true, auto_promote_eligible: true },
+        { name: "E", url: "https://e.example.com", type: "rss", enabled: true, auto_promote_eligible: false },
+        { name: "F", url: "https://f.example.com", type: "reddit-json", enabled: true, auto_promote_eligible: true },
       ]),
     });
     const sources = await loadConfig("/cfg/rss-sources.json", fs);
@@ -93,7 +104,7 @@ describe("config.loadConfig", () => {
   it("throws when url is not http(s)", async () => {
     const fs = memFs({
       "/cfg/x.json": JSON.stringify([
-        { name: "X", url: "ftp://example.com", enabled: true, auto_promote_eligible: false },
+        { name: "X", url: "ftp://example.com", type: "rss", enabled: true, auto_promote_eligible: false },
       ]),
     });
     await expect(loadConfig("/cfg/x.json", fs)).rejects.toBeInstanceOf(
@@ -104,7 +115,7 @@ describe("config.loadConfig", () => {
   it("throws when enabled is not boolean", async () => {
     const fs = memFs({
       "/cfg/x.json": JSON.stringify([
-        { name: "X", url: "https://example.com", enabled: "yes", auto_promote_eligible: false },
+        { name: "X", url: "https://example.com", type: "rss", enabled: "yes", auto_promote_eligible: false },
       ]),
     });
     await expect(loadConfig("/cfg/x.json", fs)).rejects.toBeInstanceOf(
@@ -115,7 +126,7 @@ describe("config.loadConfig", () => {
   it("throws ConfigSchemaError when auto_promote_eligible is missing (no fallback per project rule)", async () => {
     const fs = memFs({
       "/cfg/x.json": JSON.stringify([
-        { name: "X", url: "https://example.com", enabled: true },
+        { name: "X", url: "https://example.com", type: "rss", enabled: true },
       ]),
     });
     await expect(loadConfig("/cfg/x.json", fs)).rejects.toBeInstanceOf(
@@ -126,7 +137,29 @@ describe("config.loadConfig", () => {
   it("throws when auto_promote_eligible is not boolean", async () => {
     const fs = memFs({
       "/cfg/x.json": JSON.stringify([
-        { name: "X", url: "https://example.com", enabled: true, auto_promote_eligible: "yes" },
+        { name: "X", url: "https://example.com", type: "rss", enabled: true, auto_promote_eligible: "yes" },
+      ]),
+    });
+    await expect(loadConfig("/cfg/x.json", fs)).rejects.toBeInstanceOf(
+      ConfigSchemaError,
+    );
+  });
+
+  it("throws ConfigSchemaError when type is missing (DECISIONS 2026-05-21, no fallback)", async () => {
+    const fs = memFs({
+      "/cfg/x.json": JSON.stringify([
+        { name: "X", url: "https://example.com", enabled: true, auto_promote_eligible: false },
+      ]),
+    });
+    await expect(loadConfig("/cfg/x.json", fs)).rejects.toBeInstanceOf(
+      ConfigSchemaError,
+    );
+  });
+
+  it("throws ConfigSchemaError when type is an unknown value", async () => {
+    const fs = memFs({
+      "/cfg/x.json": JSON.stringify([
+        { name: "X", url: "https://example.com", type: "yaml", enabled: true, auto_promote_eligible: false },
       ]),
     });
     await expect(loadConfig("/cfg/x.json", fs)).rejects.toBeInstanceOf(

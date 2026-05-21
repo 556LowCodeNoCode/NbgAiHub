@@ -6,6 +6,7 @@ function makeFeed(overrides: Partial<FeedSource> = {}): FeedSource {
   return {
     name: "Hacker News frontpage",
     url: "https://hnrss.org/frontpage",
+    type: "rss",
     enabled: true,
     auto_promote_eligible: true,
     ...overrides,

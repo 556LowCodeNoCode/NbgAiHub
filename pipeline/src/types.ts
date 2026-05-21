@@ -6,6 +6,12 @@
  * One feed entry as it appears in config/rss-sources.json after JSON.parse.
  * Loader (config.ts) validates this shape and throws ConfigSchemaError on mismatch.
  *
+ * `type` (DECISIONS 2026-05-21) selects the fetch+parse path:
+ *   - "rss"         — Atom or RSS 2.0 XML, parsed by @rowanmanning/feed-parser.
+ *   - "reddit-json" — Reddit's `/r/<sub>/new.json` endpoint. Required because
+ *                     Atom doesn't carry `score` / `num_comments` / `stickied`
+ *                     which the engagement filter (reddit-filter.ts) needs.
+ *
  * `auto_promote_eligible` is variant C policy (DECISIONS 2026-05-19): when an
  * item from this feed comes back from triage with `editor_confidence: "high"`,
  * the orchestrator writes it directly under `news/published/` rather than
@@ -16,6 +22,7 @@
 export type FeedSource = {
   name: string;
   url: string;
+  type: "rss" | "reddit-json";
   enabled: boolean;
   auto_promote_eligible: boolean;
 };
@@ -24,6 +31,11 @@ export type FeedSource = {
  * Normalized item shape emitted by parse.ts. F3 contract.
  * `guid` / `link` may be absent depending on feed quality; fingerprint walks
  * the fallback chain (guid -> link -> title).
+ *
+ * `reddit` is set only when the source was a `reddit-json` feed (DECISIONS
+ * 2026-05-21). The engagement filter consumes these fields and drops them
+ * downstream — triage / fingerprint / write never read this field, so non-Reddit
+ * code paths can ignore it.
  */
 export type FeedItem = {
   feedName: string;
@@ -32,6 +44,11 @@ export type FeedItem = {
   title: string;
   publishedAt: Date | null;
   rawContent: string | null;
+  reddit?: {
+    score: number;
+    num_comments: number;
+    stickied: boolean;
+  };
 };
 
 /**

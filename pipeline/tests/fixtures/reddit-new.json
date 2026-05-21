@@ -1,0 +1,78 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": "t3_eee",
+    "before": null,
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_aaa",
+          "title": "Community Feedback (stickied)",
+          "permalink": "/r/ClaudeCode/comments/aaa/community_feedback/",
+          "selftext": "Pinned post body.",
+          "created_utc": 1729840000,
+          "score": 250,
+          "num_comments": 80,
+          "stickied": true
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_bbb",
+          "title": "Field report from a real deploy",
+          "permalink": "/r/ClaudeCode/comments/bbb/field_report/",
+          "selftext": "We rolled out Claude Code to 200 devs.",
+          "created_utc": 1747800000,
+          "score": 124,
+          "num_comments": 65,
+          "stickied": false
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_ccc",
+          "title": "Viral but shallow",
+          "permalink": "/r/ClaudeCode/comments/ccc/viral_shallow/",
+          "selftext": "",
+          "created_utc": 1747820000,
+          "score": 200,
+          "num_comments": 5,
+          "stickied": false
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_ddd",
+          "title": "Debated but unloved",
+          "permalink": "/r/ClaudeCode/comments/ddd/debated_unloved/",
+          "selftext": "",
+          "created_utc": 1747830000,
+          "score": 10,
+          "num_comments": 100,
+          "stickied": false
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_eee",
+          "title": "Solid post on both axes",
+          "permalink": "/r/ClaudeCode/comments/eee/solid/",
+          "selftext": "Substantive discussion.",
+          "created_utc": 1747840000,
+          "score": 60,
+          "num_comments": 15,
+          "stickied": false
+        }
+      },
+      {
+        "kind": "more",
+        "data": { "id": "ignored", "name": "t1_ignored" }
+      }
+    ]
+  }
+}

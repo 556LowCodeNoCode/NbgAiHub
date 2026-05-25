@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: "https://www.anthropic.com/"
 deeper_link: "https://www.anthropic.com/research"
 ai_summary: Anthropic is the AI safety company that makes Claude. Founded in 2021 by ex-OpenAI researchers led by Dario and Daniela Amodei. They build the Claude model family, the Claude API, Claude.ai, and Claude Code — and they fund a large alignment-research program with the revenue. When a Claude product, model card, or policy changes, that change comes from Anthropic.
-tldr: "The AI safety company that makes Claude — the model, the API, Claude.ai, and Claude Code all come from Anthropic."
+tldr: "The company that makes Claude. Just like OpenAI makes ChatGPT, Anthropic makes Claude — the chatbot, the website, and Claude Code."
 aliases: []
 ---
 

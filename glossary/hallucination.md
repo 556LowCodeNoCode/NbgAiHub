@@ -9,7 +9,7 @@ last_reviewed: "2026-05-24"
 external_link: "https://www.ibm.com/think/topics/context-window"
 deeper_link: null
 ai_summary: When the model invents plausible-sounding content that isn't true. Inventing a function name, a citation, a package import — anything that *should* be grounded in reality but isn't. Hallucinations spike when context windows fill up, when the model is asked to commit beyond its training cutoff, or when it's flattered into agreeing with a wrong premise.
-tldr: "When the model invents plausible-sounding content that isn't true — a function name, a citation, an import that doesn't exist."
+tldr: "When the AI confidently makes something up that sounds right but isn't. A fake function name, a wrong citation, a made-up fact."
 aliases: ["hallucinations", "hallucinate"]
 ---
 

@@ -4,6 +4,79 @@ Append-only. Each entry permanent. When a decision is superseded, add a new entr
 
 ---
 
+## 2026-05-25 (late-evening) — Micro-port from Crist + Onboarding guide: glass-of-water metaphor, amnesia framing, permission-modes tip, briefing-template tip
+
+**Decision:** Read Michael Crist's substack post (`michaelcrist.substack.com/p/claude-code`) and re-read the team's `556lowcodenocode.github.io/Onboarding` reference. Borrowed exactly 4 items where the borrow added value the existing corpus genuinely lacked. Rejected ~10 others because they would have duplicated content the Onboarding guide already owns (per the project rule "complement, don't duplicate" — CLAUDE.md "Complementary to the Onboarding guide… deep-links into it, does not duplicate it"), or were already covered by existing tips, or would have opened scope creep into use-case demos (email triage, dashboard-as-deliverable) that the hub has deliberately stayed out of.
+
+**The 4 borrowed items:**
+
+1. **Glass-of-water metaphor for the context window** → `glossary/context-window.md` body. Replaced the vaguer "Claude's working memory for this conversation" framing with: "think of it as a glass of water. Every prompt you send, every file Claude reads, every command output, and every reply Claude writes pours something in. When the glass is full, the oldest content spills out and Claude starts forgetting." Added a second short paragraph connecting the metaphor to the observable symptom ("answers get vaguer or repeat themselves in long sessions"). Reason this is load-bearing: it makes the *filling* mechanism concrete, which is what makes `/compact` and `/clear` feel necessary rather than arbitrary. Tldr unchanged (already concise + beginner-targeted from the project-wide rewrite earlier today).
+
+2. **"Long-term memory but amnesia about this morning" framing** → `glossary/claudemd.md` body. Added as the new opening sentence: "Working with Claude is like working with an assistant who has a great long-term memory but total amnesia about what happened this morning — every new session starts cold. `CLAUDE.md` is how you brief that assistant before each session, automatically." Existing body preserved verbatim below. Reason this is load-bearing: it explains *why* `CLAUDE.md` matters (compounding session-start briefings) in one beat, not via an abstract definition. Crist's exact framing, single best one-liner I found across both source pages. Tldr unchanged.
+
+3. **Permission modes + Shift+Tab cycle** → new tip `tips/permission-modes.md`. Covers default / auto-accept-edits / plan mode and the Shift+Tab cycle. Reason this passes the duplication check: none of the existing 12 tips touch on the mode cycle. `tips/esc-to-stop.md` covers Esc (interrupt) and Esc Esc (history scrubber), which are about *stopping*, not about *permission flow*. Plan mode in particular is "wish I knew on day 1" — a beginner who knows about plan mode reaches the right Claude-Code rhythm a week earlier (propose first, accept once, watch execute). The tip is plainspoken: three bullets, one common rhythm ("plan → propose → Shift+Tab → auto-accept while you scan diffs"), explicit note that the mode is per-session.
+
+4. **5-line briefing template (Role/Goal/Task/Constraints/Context)** → new tip `tips/prompt-briefing-template.md`. Reason this passes the duplication check: the existing 6 prompting tips include `prompt-bad-vs-good-openers.md` which carries a 5-part recipe (Location/Symptom/Repro/Desired/Constraint) — but that recipe is *dev-shaped* (file paths, repro steps, desired behaviour). Crist's Role/Goal/Task/Constraints/Context shape is *generic*, anchored on the *purpose* of the work rather than its file location. Explicitly targets the bank-colleague use cases where there's no file path: summarising a PDF for a committee, drafting an email, structuring a deck. The tip leads with the 5 lines, shows a bad-vs-good pair (PDF-summary example), and closes with "works for code too, but it shines on non-code work".
+
+**The 10+ rejected items:**
+
+- Three-layer model (LLM / Claude Code / team layer) — Onboarding owns this; copying would duplicate.
+- Build time vs runtime — already a glossary term (`build-time-vs-runtime`).
+- "Agent with hands" mental model — Onboarding covers it ("hands and eyes").
+- GSD workflow walkthrough — Onboarding territory.
+- Skill creation philosophy — Onboarding territory.
+- `claude --dangerously-skip-permissions` flag — borderline; left out for now because the new permission-modes tip covers the per-session knob, which is the more frequently-needed control. Could land later if there's demand.
+- Email triage loop, dashboard-as-deliverable, spreadsheet pivots (Crist) — opens scope creep into use-case demos; belongs in a separate "playbooks" pillar if we ever build one (currently deferred per SCOPE.md).
+- "Briefings, not prompts" framing as a standalone concept — folded into the briefing-template tip body rather than spun out as its own glossary term.
+- Real session example (Q1 growth target mismatch) from Onboarding — concrete but team-specific; doesn't generalise.
+- Conversation rewinding (Esc Esc) — already covered in `tips/esc-to-stop.md`.
+
+**Why (in one breath):** The operator asked for an honest pass over two well-regarded external Claude Code references with the instruction "don't push it, only if it really makes sense and adds value." I borrowed exactly the items where existing content was *less* vivid (context-window's working-memory line vs the glass-of-water metaphor) or *missing* (no permission-modes coverage anywhere; no generic non-code briefing template). The bar held: every borrow either replaces a weaker line with a stronger one, or fills a real gap.
+
+**Files touched:**
+- `glossary/context-window.md` — body opener replaced + one short paragraph added (frontmatter unchanged)
+- `glossary/claudemd.md` — body opener added (one new paragraph), existing paragraph preserved verbatim (frontmatter unchanged)
+- `tips/permission-modes.md` (new)
+- `tips/prompt-briefing-template.md` (new)
+- `CLAUDE.md` + `SCOPE.md` AUTO blocks regenerated via `scripts/sync-doc-counts.mjs` (tips: 12 → 14)
+- `SCOPE.md` — pillar table tip count 12 → 14; "Tips & Tricks entries" MVP row updated to "14 SHIPPED" preserving the 2026-05-19 origin date; "Last updated" header prepended with this session's summary
+
+**Reversibility:** All 4 content edits are scoped to individual files (2 glossary line-level edits, 2 new tip files). Reverting any one item is a single-file edit or delete. No schema, build-config, primitive, or component changes.
+
+---
+
+## 2026-05-25 (evening) — Day 1 UX redesign + project-wide glossary tldr rewrite for beginners
+
+**Decision:** Evening session bundling three operator-driven calls on top of the same /start-here/day-1/ page that landed in the late-afternoon reader-mode work. One iteration loop (visual review on localhost → fix → re-screenshot), one operator.
+
+1. **Day 1 hero retitled to *"Where to start. Practically."*** — dropping "Day 1 — what I wish I knew" since the latter is the project-wide tagline (used on the homepage and in foundation copy). The new title positions this page as the *practical setup walkthrough*, distinct from the Foundations narrative. Same serif + accent-italic treatment retained.
+
+2. **Day 1 hero now carries a 5-step journey overview** — a horizontal chip-row immediately below the lede listing all five steps with their numbers (01–05) and full titles, each a deep-link to `#step-N`. Active chip highlights as the user scrolls via an inline IntersectionObserver (~50 LOC, mirrors the StepIndicator primitive but inline-scoped because the page already has its own self-contained layout). Newcomer-facing rationale: a return visitor can jump straight back in; a first-timer sees the whole arc before committing to the scroll.
+
+3. **Per-step "0N" pill badge** added as the primary visual landmark inside each `.journey-step`. Accent-tinted background (`color-mix(in srgb, var(--nbg-accent) 6%, transparent)`), accent-bordered, mono digits, paired with the serif step title. The original `STEP N / 5` mono eyebrow above stays as a quiet breadcrumb — the badge is the landmark, the eyebrow is the global progress counter. Reader-mode CSS (`[data-mode='reader'] .journey-step__title`) still applies the serif clamp(); the badge is a new sibling not a replacement.
+
+4. **Skills card dropped from "Where next"** on Day 1 — operator direction "remove the skills part from this page". Bottom CTA is now `grid-2`: Tips & Tricks + Glossary. Sidebar prev/next pagination still shows "Next → Skills" (sidebar-order controlled, separate concern). Note: this is reversible (one cell back into `grid-3`).
+
+5. **Stale-content cache discovery** — operator's "page still shows the skills marketplace step" report was rendered-output staleness from Astro 6's content data-store (`site/.astro/data-store.json`). The markdown source at `journeys/day-1.md` had already been corrected by earlier commits (`d742ba0` "replace marketplace step with GitHub onboarding", `571620d` "remove Step 6"). Fix: `rm -rf site/.astro && kill dev-server && restart`. This is the same authoring-doc pitfall as glossary entries — Astro content collections do NOT pick up file changes via HMR alone. Worth documenting in the authoring doc for journey edits too (currently only documented for glossary). Tracks the same root cause as Issues #17 (Astro content-store survives config touches).
+
+6. **Project-wide glossary `tldr` rewrite for beginner accessibility.** All 34→36 entries had their tldr replaced with plainer-language versions. **Editorial pivot:** jargon-as-explanation ("statistical engine trained to predict the next chunk of text", "the published contract one piece of software offers another", "USB-C for AI integrations", "the collective filing cabinet and review surface every software team uses") was the dominant pattern — phrasings that *sound* concise but require already knowing the field. Replaced with everyday analogies and concrete examples: "The AI behind chatbots like Claude. It learned from huge amounts of text to predict what word comes next — that's the whole trick." / "A door one program opens for another. When an app fetches the weather or sends a message, it's calling an API behind the scenes." / "A standard way to plug Claude Code into outside tools and data — Jira, Slack, your calendar. Think of it as a universal adapter." All 36 lengths fall in 111–150 chars, well within the 160-char schema cap. **Voice rule going forward** (folds into the project tone rule "what I wish I knew a year ago"): tldrs explain *to* a beginner, not *between* experts. Jargon inside a tldr is OK only when it itself links to another glossary entry (which the build-time `linkGlossaryTerms()` nests automatically — "Claude Code" inside agent's tldr is a clickable button to claude-code's own tooltip).
+
+7. **Two new glossary entries** authored as part of the same session: `glossary/github.md` (the platform, distinct from the existing `gh` CLI entry — covers "the website where the team's code lives" / "three doors: website, gh, cloned folder on laptop") with aliases `[]` (GitHub is one token, case-insensitive matches all variants), and `glossary/slash-command.md` (covers `/help`, `/model`, `/clear`, `/compact`, `/hooks`, `/plugin`, `/hub-*`, and how installed skills surface as slash commands) with aliases `["slash command", "slash commands"]`. Glossary count 34 → 36.
+
+8. **Authoring-flow learning — hyphenated slugs need their spaced variants in `aliases`.** Mid-flight catch: `slash-command.md` initially shipped with `aliases: ["slash commands"]` only. Result: 0 buttons in any prose, even on tldrs that contain "slash command" (singular, with space). The plugin / `linkGlossaryTerms` matcher uses non-alphanumeric-lookaround word boundaries, so `slash-command` (hyphenated) and `slash command` (spaced) are different tokens. Fix: add `"slash command"` to aliases too. This is the same gotcha already documented in `docs/reference/authoring-glossary-terms.md` Step 2 for `claude-code` → `"Claude Code"` — the lesson generalizes: **every hyphenated slug needs both spaced singular and spaced plural in its aliases list if either form appears in prose**.
+
+**Why (collected):** The Day-1 redesign followed up on operator feedback that the page felt visually flat — five steps with identical chrome made it hard to know where you were or how much was left. The chip-row + step badge give two new orientation aids without breaking the reader-mode aesthetic (still calm, still single-rhythm; the badges sit next to titles, not stacked on top). The glossary tldr rewrite is the bigger move — when the operator pointed at the GitHub tooltip's old "the collective filing cabinet and review surface every software team uses" and called it "quite difficult for beginner", it was the canary for a systemic issue: ~half the tldrs were written for an audience that already knew the answer. The rewrite re-tunes the entire tooltip layer for the actual primary audience (bank colleagues new to Claude Code, per SCOPE.md).
+
+**Files touched:**
+- `site/src/pages/start-here/day-1.astro` — hero title rename, journey-overview nav, step badge per step, grid-3→grid-2 Where Next, inline IntersectionObserver script
+- `glossary/github.md` (new), `glossary/slash-command.md` (new)
+- All 35 existing `glossary/*.md` tldrs rewritten (agent, anthropic, api, branch, build-time-vs-runtime, claude-code, claude-vs-chatgpt-vs-gemini, claudemd, cli, commit, context-window, frontmatter, gh, gsd, gui, hallucination, hook, http, issue, large-language-model, markdown, mcp, model, plugin, prompt, pull-request, repository, rss, shell-commands, skill, terminal, token, tool-use, yaml + new github)
+- `CLAUDE.md` + `SCOPE.md` AUTO blocks regenerated via `scripts/sync-doc-counts.mjs` (glossary count: 34 → 35 → 36)
+
+**Reversibility:** The hero title, chip-row, step badge, and grid-2/grid-3 choice are all scoped edits inside one page file — straightforward to revert. The tldr rewrites are 36 line-level edits; reverting individual ones is a per-file edit. No schema / API / build-config changes.
+
+---
+
 ## 2026-05-25 — Content-page reader mode, listing-page glossary auto-linking, MyPins redesign, sticky glossary rail, nested tooltips
 
 **Decision:** End-of-day session bundling nine user-driven UI / content / docs calls. Treated as one entry because they share the same iteration loop (visual review on localhost → immediate fix) and the same operator (one user, one afternoon).

@@ -9,7 +9,7 @@ last_reviewed: "2026-05-19"
 external_link: null
 deeper_link: "https://556lowcodenocode.github.io/Onboarding/"
 ai_summary: A proposal to merge a branch back into `main`. The PR is where review, discussion, CI checks, and the final approval happen — it's the conversation, not just the code.
-tldr: "A proposal to merge a branch back into main. The PR is where review, discussion, CI checks, and the final approval happen."
+tldr: "A request to add your changes into the main project. Teammates review the diff and comment before it gets merged in."
 aliases: ["PR", "PRs", "pull request", "pull requests"]
 ---
 

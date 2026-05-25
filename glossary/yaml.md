@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: "https://yaml.org/"
 deeper_link: null
 ai_summary: YAML is a human-readable configuration format that uses indentation rather than braces to express nested structure. It's the lingua franca of CI workflows, Kubernetes manifests, and markdown frontmatter. In this repo it shows up in every glossary/tip/skill frontmatter block and in the GitHub Actions workflows.
-tldr: A human-readable config format. Indentation-based, supports nested objects and lists. Used in this repo for frontmatter and GitHub Actions workflows.
+tldr: "A simple way to write settings using indentation and colons, like name: Alice. Easier to read than JSON. Used in lots of config files."
 aliases: ["YAML"]
 ---
 

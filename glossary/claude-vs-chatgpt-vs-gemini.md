@@ -9,7 +9,7 @@ last_reviewed: "2026-05-24"
 external_link: null
 deeper_link: null
 ai_summary: The big four chatbot brands. All are LLMs you reach through a web/desktop chat. They differ in vendor (Anthropic / OpenAI / Google / xAI), model family, pricing, and tone. Claude.ai is Anthropic's chat product. Claude Code is the *separate* terminal agent — much closer to a developer tool than to any of the chatbots.
-tldr: "The big four chatbot brands — Claude, ChatGPT, Gemini, Grok. All LLMs in a chat UI; they differ in vendor, model family, pricing, and tone."
+tldr: "The four big AI chatbots: Claude (Anthropic), ChatGPT (OpenAI), Gemini (Google), Grok (xAI). Same basic idea, different companies and styles."
 aliases: []
 ---
 

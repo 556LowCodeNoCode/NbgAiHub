@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: null
 deeper_link: null
 ai_summary: An API is the published contract one piece of software offers another — a list of URLs you can call, what to send, what you'll get back. Most modern services have one. Anthropic's API is what you call directly when your own code needs to talk to Claude, instead of using a chat window or Claude Code as the intermediary.
-tldr: An API is the published contract one piece of software offers another — a set of URLs and rules for what to send and what comes back.
+tldr: "A door one program opens for another. When an app fetches the weather or sends a message, it's calling an API behind the scenes."
 aliases: ["APIs", "api", "apis", "application programming interface"]
 ---
 

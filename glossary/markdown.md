@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: "https://www.markdownguide.org/basic-syntax/"
 deeper_link: null
 ai_summary: Markdown is a plain-text format for writing prose with light formatting — headings, lists, links, code blocks — using a handful of punctuation conventions instead of HTML tags. Every content file in this repo is a `.md`. Astro converts it to HTML at build time, and that HTML is what readers see in the browser.
-tldr: A plain-text format for prose with light formatting (headings, lists, links, code). Every content file in this repo is a .md.
+tldr: "A simple way to format text using symbols like ** for bold or # for headings. Plain text you can read raw. Used everywhere on the web."
 aliases: ["MD"]
 ---
 

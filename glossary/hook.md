@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: "https://docs.claude.com/en/docs/claude-code/hooks"
 deeper_link: null
 ai_summary: A hook is a shell command Claude Code runs automatically at specific event points — before/after a tool call, on session start, on session stop. Hooks are configured in settings.json and run in the host shell, not the sandbox, which makes them powerful enough to enforce repo-wide policies and powerful enough to wedge your whole session if you write a bad one.
-tldr: "A shell command Claude Code runs automatically at event points (pre/post tool, session start/stop). Configured in settings.json. Powerful — careful."
+tldr: "A command Claude Code runs automatically at certain moments — before a tool runs, when a session ends. Used for guardrails and automation."
 aliases: ["hooks"]
 ---
 

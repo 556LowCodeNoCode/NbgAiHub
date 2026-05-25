@@ -88,8 +88,8 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 <!-- AUTO:counts -->
 | Pillar | Files |
 |---|---|
-| Glossary | 34 |
-| Tips | 12 |
+| Glossary | 36 |
+| Tips | 14 |
 | Skills | 9 |
 | Journeys | 2 |
 | News (published) | 54 |

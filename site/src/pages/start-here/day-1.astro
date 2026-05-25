@@ -113,12 +113,24 @@ const heroSummary = entry.data.ai_summary;
   <section class="hero hero--stack">
     <div class="wrap">
       <div class="hero__intro">
-        <h1 class="hero__title">Day 1 — <em>what I wish I knew.</em></h1>
+        <h1 class="hero__title">Where to start. <em>Practically.</em></h1>
         <p class="hero__lede">
           <Fragment set:html={linkGlossaryTerms(heroSummary)} />
-          <small>Audience: {entry.data.audience} · ~30 min</small>
+          <small>Audience: {entry.data.audience} · ~30 min · {renderedSteps.length} steps</small>
         </p>
       </div>
+      <nav class="journey-overview" aria-label="Day 1 steps">
+        <ol>
+          {renderedSteps.map((step) => (
+            <li>
+              <a href={`#step-${step.n}`} data-step-id={`step-${step.n}`}>
+                <span class="journey-overview__num">{String(step.n).padStart(2, '0')}</span>
+                <span class="journey-overview__label" set:html={step.title.replace(/`([^`]+)`/g, '<code>$1</code>')} />
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
     </div>
   </section>
 
@@ -143,7 +155,10 @@ const heroSummary = entry.data.ai_summary;
           <span class="count">{step.title}</span>
         </div>
         <div class="journey-step">
-          <h3 class="journey-step__title">{step.title}</h3>
+          <div class="journey-step__header">
+            <span class="journey-step__badge" aria-hidden="true">{String(step.n).padStart(2, '0')}</span>
+            <h3 class="journey-step__title" set:html={step.title.replace(/`([^`]+)`/g, '<code>$1</code>')} />
+          </div>
           <div class="journey-step__body sl-markdown-content" set:html={step.html} />
         </div>
       </div>
@@ -155,14 +170,7 @@ const heroSummary = entry.data.ai_summary;
       <div class="section__head">
         <h2>Where next</h2>
       </div>
-      <div class="grid-3">
-        <article class="card card--text">
-          <div class="card__body">
-            <div class="card__meta"><span class="eyebrow eyebrow--accent">Skills</span></div>
-            <h3 class="card__title"><a href="/skills/">Browse the catalog</a></h3>
-            <p class="card__summary" set:html={linkGlossaryTerms('Nine team-curated skills, each with a one-line install and a "what it actually does" summary.')} />
-          </div>
-        </article>
+      <div class="grid-2">
         <article class="card card--text">
           <div class="card__body">
             <div class="card__meta"><span class="eyebrow eyebrow--accent">Tips</span></div>
@@ -174,7 +182,7 @@ const heroSummary = entry.data.ai_summary;
           <div class="card__body">
             <div class="card__meta"><span class="eyebrow eyebrow--accent">Glossary</span></div>
             <h3 class="card__title"><a href="/glossary/">Look up terms</a></h3>
-            <p class="card__summary" set:html={linkGlossaryTerms('Twenty-eight terms in plain English — what they mean, when they matter. Use it as a reference, not a reading list.')} />
+            <p class="card__summary" set:html={linkGlossaryTerms('Thirty-four terms in plain English — what they mean, when they matter. Use it as a reference, not a reading list.')} />
           </div>
         </article>
       </div>
@@ -192,9 +200,116 @@ const heroSummary = entry.data.ai_summary;
     .journey-intro :global(p) {
       margin: 0 0 1rem 0;
     }
+
+    /* ── Hero journey overview ────────────────────────────────────────
+       A horizontal map of the 5 steps shown directly under the hero
+       lede. Lets a newcomer see the whole journey at a glance and jump
+       in mid-way on a return visit. Each step renders as a chip with a
+       monospaced 0N number and the step title. Active step (when the
+       user is scrolled into it) gets accent treatment via JS below. */
+    .journey-overview {
+      margin-top: 2rem;
+      padding-top: 1.75rem;
+      border-top: 1px solid var(--nbg-hairline);
+    }
+    .journey-overview ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    .journey-overview li {
+      margin: 0;
+    }
+    .journey-overview a {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.875rem 0.875rem 1rem;
+      border: 1px solid var(--nbg-hairline);
+      border-radius: var(--nbg-r-md);
+      background: var(--nbg-surface);
+      color: var(--nbg-ink-2);
+      text-decoration: none;
+      transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+      height: 100%;
+    }
+    .journey-overview a:hover {
+      border-color: color-mix(in srgb, var(--nbg-accent) 50%, var(--nbg-hairline));
+      background: color-mix(in srgb, var(--nbg-accent) 4%, var(--nbg-surface));
+      transform: translateY(-1px);
+    }
+    .journey-overview a:focus-visible {
+      outline: 2px solid var(--nbg-accent);
+      outline-offset: 2px;
+    }
+    .journey-overview li[data-current='true'] a {
+      border-color: var(--nbg-accent);
+      background: color-mix(in srgb, var(--nbg-accent) 8%, var(--nbg-surface));
+    }
+    .journey-overview__num {
+      font-family: var(--nbg-ff-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      color: var(--nbg-accent);
+      font-weight: 600;
+      padding-top: 0.1rem;
+      flex: 0 0 auto;
+    }
+    .journey-overview__label {
+      font-family: var(--nbg-ff-body);
+      font-size: 0.9375rem;
+      line-height: 1.3;
+      color: var(--nbg-ink);
+      letter-spacing: -0.005em;
+    }
+    .journey-overview__label :global(code) {
+      font-family: var(--nbg-ff-mono);
+      font-size: 0.875em;
+      background: var(--nbg-surface-2);
+      padding: 0.05em 0.3em;
+      border-radius: var(--nbg-r-sm);
+    }
+    @media (max-width: 60rem) {
+      .journey-overview ol {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 36rem) {
+      .journey-overview ol {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .journey-overview a {
+        padding: 0.75rem 0.875rem;
+      }
+    }
+
     .journey-step {
       max-width: 56rem;
       scroll-margin-top: 5rem;
+    }
+    .journey-step__header {
+      display: flex;
+      align-items: baseline;
+      gap: 1.25rem;
+      margin: 0 0 1.25rem 0;
+    }
+    .journey-step__badge {
+      font-family: var(--nbg-ff-mono);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--nbg-accent);
+      flex: 0 0 auto;
+      padding: 0.2rem 0.55rem;
+      border: 1px solid color-mix(in srgb, var(--nbg-accent) 35%, var(--nbg-hairline));
+      border-radius: var(--nbg-r-pill);
+      background: color-mix(in srgb, var(--nbg-accent) 6%, transparent);
+      line-height: 1.4;
+      align-self: center;
     }
     .journey-step__title {
       font-family: var(--nbg-ff-serif);
@@ -203,7 +318,7 @@ const heroSummary = entry.data.ai_summary;
       line-height: 1.15;
       letter-spacing: -0.02em;
       color: var(--nbg-ink);
-      margin: 0 0 1rem 0;
+      margin: 0;
     }
     .journey-step__body {
       color: var(--nbg-ink);
@@ -240,3 +355,44 @@ const heroSummary = entry.data.ai_summary;
     }
   }
 </style>
+
+<script>
+  // Highlight the active step in the hero overview as the user scrolls.
+  // Cheap IntersectionObserver — no scroll handler, no requestAnimationFrame.
+  // Mirrors the StepIndicator primitive but inline so the page stays self-contained.
+  (() => {
+    const overview = document.querySelector<HTMLElement>('.journey-overview');
+    if (!overview) return;
+    const items = overview.querySelectorAll<HTMLElement>('li');
+    if (items.length === 0) return;
+
+    const sections: HTMLElement[] = [];
+    items.forEach((li) => {
+      const link = li.querySelector<HTMLAnchorElement>('a[data-step-id]');
+      const id = link?.dataset.stepId;
+      if (!id) return;
+      const section = document.getElementById(id);
+      if (section) sections.push(section);
+    });
+    if (sections.length === 0) return;
+
+    const setCurrent = (id: string | null) => {
+      items.forEach((li) => {
+        const a = li.querySelector<HTMLAnchorElement>('a[data-step-id]');
+        const isCurrent = a?.dataset.stepId === id;
+        li.dataset.current = isCurrent ? 'true' : 'false';
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setCurrent(visible.target.id);
+      },
+      { rootMargin: '-25% 0px -55% 0px', threshold: [0, 0.1, 0.5] },
+    );
+    sections.forEach((s) => observer.observe(s));
+  })();
+</script>

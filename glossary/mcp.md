@@ -9,7 +9,7 @@ last_reviewed: "2026-05-18"
 external_link: null
 deeper_link: null
 ai_summary: An open protocol that lets Claude Code talk to external tools, data sources, and services through a uniform interface — think USB-C for AI integrations.
-tldr: "An open protocol that lets Claude Code talk to external tools, data sources, and services through a uniform interface. USB-C for AI integrations."
+tldr: "A standard way to plug Claude Code into outside tools and data — Jira, Slack, your calendar. Think of it as a universal adapter for AI."
 aliases: []
 ---
 

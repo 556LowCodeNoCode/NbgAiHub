@@ -291,13 +291,16 @@ const manifestJson = JSON.stringify(manifest)
       });
     }
 
+    // `wire` takes an optional `ParentNode` scope, but event listeners
+    // are called with an `Event`. Wrap so the event is dropped and `wire`
+    // defaults to scanning the whole document.
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', wire);
+      document.addEventListener('DOMContentLoaded', () => wire());
     } else {
       wire();
     }
     // Astro view transitions re-fire after navigation.
-    document.addEventListener('astro:page-load', wire);
+    document.addEventListener('astro:page-load', () => wire());
   })();
 </script>
 

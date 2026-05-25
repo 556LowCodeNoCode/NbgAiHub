@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: null
 deeper_link: null
 ai_summary: A GUI — graphical user interface — is the windowed kind of program you click around in. Word, Slack, Chrome, your IDE, Photoshop — all GUIs. The opposite is a CLI, which you drive by typing commands in a terminal. Most developer tools live in CLIs because text is composable, scriptable, and reproducible in a way that mouse clicks aren't. Claude Code is a CLI, not a GUI.
-tldr: "The windowed, clickable kind of program — Word, Slack, Chrome, your IDE. The opposite of a CLI. Claude Code is a CLI, not a GUI."
+tldr: "The clickable, windowed kind of software — Word, Slack, Chrome. Anything you use with a mouse. The opposite of a CLI."
 aliases: ["GUIs", "graphical user interface"]
 ---
 

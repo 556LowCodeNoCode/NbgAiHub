@@ -9,7 +9,7 @@ last_reviewed: "2026-05-24"
 external_link: null
 deeper_link: null
 ai_summary: The text you give a language model as input. Anything you type into Claude Code is a prompt. The system prompt is the always-loaded instruction layer underneath. Good prompting is half the productivity gain — be specific, set constraints, give examples.
-tldr: "The text you give a language model as input. Anything you type into Claude Code is a prompt. Good prompting is half the productivity gain."
+tldr: "Whatever you type to an AI to ask it something. Better prompts get better answers — clarity, examples, and context all help."
 aliases: ["prompts", "prompting"]
 ---
 

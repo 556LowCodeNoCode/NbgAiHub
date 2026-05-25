@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: "https://en.wikipedia.org/wiki/RSS"
 deeper_link: null
 ai_summary: RSS is an old XML format every blog and news site publishes — a machine-readable list of recent posts you can subscribe to without opening the page. NbgAiHub's daily news pipeline ingests five RSS feeds, runs each item through Azure OpenAI triage, and writes the survivors into a curated news collection. Atom is the sibling format — different XML, same idea.
-tldr: "An old, boring, still-best-in-class XML format for subscribing to a site's updates. NbgAiHub's daily news pipeline ingests five RSS feeds."
+tldr: "An old but reliable way to subscribe to a site's updates without checking it manually. NbgAiHub uses RSS to pull in daily news from five tech sources."
 aliases: ["RSS feed", "RSS feeds"]
 ---
 

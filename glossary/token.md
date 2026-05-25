@@ -9,7 +9,7 @@ last_reviewed: "2026-05-24"
 external_link: "https://platform.openai.com/tokenizer"
 deeper_link: null
 ai_summary: The unit a language model thinks in. Roughly 3-4 characters of text, or about ¾ of a word on average. Every prompt, every response, every file the model reads is measured in tokens — and the model's context window is a fixed-size budget of them.
-tldr: "The unit a language model thinks in. Roughly 3-4 characters of text, or about ¾ of a word. Context windows and API pricing are both measured in tokens."
+tldr: "The chunks of text an AI thinks in — roughly three-quarters of a word each. Pricing and memory limits are both counted in tokens."
 aliases: ["tokens"]
 ---
 

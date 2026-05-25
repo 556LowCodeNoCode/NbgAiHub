@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: "https://docs.claude.com/en/docs/about-claude/models/overview"
 deeper_link: null
 ai_summary: A model in Claude Code is a specific trained version of Claude that Anthropic publishes — the actual large language model the agent is wrapped around. Three current families (Opus, Sonnet, Haiku) trade off depth of reasoning against speed and cost, each with numbered releases. Switch inside Claude Code with /model — pick for speed × task fit, not cost.
-tldr: "A specific trained version of Claude (Opus, Sonnet, Haiku — each with a version number). Switch inside Claude Code with /model <name>."
+tldr: "A specific version of Claude. Opus is the smartest, Haiku is the fastest, Sonnet is the middle ground. Switch with /model in Claude Code."
 aliases: ["models"]
 ---
 

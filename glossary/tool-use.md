@@ -9,7 +9,7 @@ last_reviewed: "2026-05-24"
 external_link: null
 deeper_link: null
 ai_summary: How an LLM does things beyond producing text. Tools are functions the model is allowed to call — read a file, run a shell command, fetch a URL, query a database. Tool use is what turns a language model into an agent.
-tldr: "How an LLM does things beyond producing text. Tools are functions the model can call — read a file, run a shell command, fetch a URL, query a database."
+tldr: "How an AI does things beyond chatting — reading a file, running a command, fetching a webpage. Each ability the AI can use is called a tool."
 aliases: ["tool use", "tool calling", "tool calls"]
 ---
 

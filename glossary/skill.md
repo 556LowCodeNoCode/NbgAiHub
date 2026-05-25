@@ -9,7 +9,7 @@ last_reviewed: "2026-05-18"
 external_link: null
 deeper_link: null
 ai_summary: A reusable unit of Claude Code capability packaged as a directory of instructions, scripts, and metadata that gets surfaced as a slash command or invoked by name.
-tldr: "A reusable unit of Claude Code capability — a folder with instructions, scripts, and metadata, surfaced as a slash command or invoked by name."
+tldr: "A pre-packaged ability you give Claude — a folder of instructions Claude follows when you trigger it, often via a slash command."
 aliases: ["skills"]
 ---
 

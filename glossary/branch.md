@@ -9,7 +9,7 @@ last_reviewed: "2026-05-19"
 external_link: null
 deeper_link: "https://556lowcodenocode.github.io/Onboarding/"
 ai_summary: A parallel line of work. You branch off `main`, make changes without disturbing anyone, then merge back via a Pull Request when it's ready.
-tldr: "A parallel line of work. You branch off main, make changes without disturbing anyone, then merge back via a Pull Request when it's ready."
+tldr: "A safe side-copy of the project where you can try changes without breaking what everyone else is using. When ready, you merge it back in."
 aliases: ["branches"]
 ---
 

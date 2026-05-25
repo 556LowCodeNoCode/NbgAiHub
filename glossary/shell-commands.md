@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: null
 deeper_link: null
 ai_summary: A shell command is a single instruction you type at the terminal. `ls`, `cd`, `git status`, `npm install`, `claude` — all shell commands. The "shell" is the program (bash, zsh, fish, PowerShell) that reads your command, runs it, and shows you the output. Claude Code can run shell commands on your behalf — it's one of the four "hands" that makes it more than a chatbot.
-tldr: "A single instruction you type at the terminal — ls, cd, git status, npm install. Claude Code can run them on your behalf, with permission."
+tldr: "Commands you type in the terminal to get things done — list files, change folders, run a script. Claude can run them for you with your OK."
 aliases: ["shell command", "shell"]
 ---
 

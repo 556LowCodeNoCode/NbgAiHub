@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: null
 deeper_link: null
 ai_summary: A terminal is the text window where you type commands and read their output. On Mac it's Terminal.app or iTerm2; on Windows it's Windows Terminal or PowerShell; on Linux any of dozens. Underneath each one runs a shell (bash, zsh, fish) that actually interprets what you type. Claude Code lives here — you launch it by typing `claude` in a terminal inside your project folder.
-tldr: "The text window where you type commands and read their output. Claude Code runs here — you launch it with `claude` in a terminal inside your project."
+tldr: "The plain text window where you type commands instead of clicking. Claude Code lives here — you start it by typing claude in a project folder."
 aliases: ["terminals"]
 ---
 

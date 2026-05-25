@@ -9,7 +9,7 @@ last_reviewed: "2026-05-24"
 external_link: "https://forethought.ai/blog/what-is-an-ai-agent"
 deeper_link: null
 ai_summary: An agent is a language model wrapped in a loop that lets it call tools — read files, run commands, query APIs — and iterate on its own work until the task is done. A chatbot is the same model without that loop. Claude Code is an agent. Inside Claude Code, you can also spawn focused subagents to delegate sub-tasks without polluting the parent context.
-tldr: "A language model wrapped in a loop that can call tools — read files, run commands, query APIs — and iterate until the task is done."
+tldr: "An AI assistant that can take actions on your behalf — read files, run commands, browse the web — not just chat back. Claude Code is one."
 aliases: ["agents"]
 ---
 

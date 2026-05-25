@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: null
 deeper_link: null
 ai_summary: HTTP is the request-response protocol that runs the web. Every time your browser loads a page, every time a script hits an API endpoint, every time Claude Code's underlying client calls Anthropic's servers — that's HTTP. HTTPS is the same thing with an encrypted transport.
-tldr: HTTP is the request-response protocol that runs the web — every URL fetch, every API call. HTTPS is the encrypted version.
+tldr: "The language computers use to talk over the web. Every page you load and every API call uses HTTP. HTTPS is the encrypted version."
 aliases: ["HTTPS", "http", "https"]
 ---
 

@@ -9,7 +9,7 @@ last_reviewed: "2026-05-25"
 external_link: null
 deeper_link: null
 ai_summary: Frontmatter is the YAML block fenced by `---` at the top of a markdown file that carries metadata about the file (title, date, audience, tags). The body below is the prose; the frontmatter is the structured data the build pipeline reads. Every content file in this repo opens with one.
-tldr: The YAML block fenced by triple-dash lines at the top of a markdown file. Carries metadata (title, audience, dates, tags) the build pipeline reads.
+tldr: "The little block of settings at the top of a markdown file, between two --- lines. Stores info like title, date, and tags."
 aliases: ["YAML frontmatter", "front-matter", "front matter"]
 ---
 

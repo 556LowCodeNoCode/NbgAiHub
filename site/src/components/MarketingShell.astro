@@ -172,9 +172,14 @@ const showHero    = hero === 'auto' && hasHeroSlot;
     --sl-mobile-toc-height: 0;
   }
   /* Topnav inner max-width must match the AgentNews container (1240px)
-   * so the brand + nav links align with the .wrap inside each section. */
+   * so the brand + nav links align with the .wrap inside each section.
+   * `margin-inline: auto` centers the 1240px inner within the viewport-
+   * wide outer nav — without it, the inner left-anchors and wide
+   * viewports show a big empty gap on the right of the nav bar
+   * (visible on 1920px monitors viewing the deployed Pages site). */
   body:has([data-marketing='true']) .nbg-topnav__inner {
     max-width: var(--nbg-container-max, 77.5rem) !important;
+    margin-inline: auto !important;
     padding-inline: var(--nbg-container-pad-desktop, 2rem) !important;
   }
   @media (max-width: 45rem) {

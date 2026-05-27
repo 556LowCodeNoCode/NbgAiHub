@@ -668,76 +668,80 @@ function resourceKindTone(kind: Resource['kind']): string {
       max-width: 48rem !important;
       scroll-margin-top: 5rem;
     }
+    /* !important throughout — Starlight's unlayered `.sl-markdown-content`
+       rules (p, blockquote, code, table, etc.) beat our `@layer nbg.components`
+       declarations in production builds. Memory: feedback_starlight_unlayered. */
     .foundation-step__body {
       color: var(--nbg-ink);
       font-size: 1rem;
       line-height: 1.7;
-      text-align: justify;
+      text-align: justify !important;
       hyphens: auto;
       -webkit-hyphens: auto;
       word-spacing: 0;
     }
     .foundation-step__body :global(p) {
-      margin: 0 0 1rem 0;
+      margin: 0 0 1rem 0 !important;
     }
     .foundation-step__body :global(p:last-child) {
-      margin-bottom: 0;
+      margin-bottom: 0 !important;
     }
     .foundation-step__body :global(ul),
     .foundation-step__body :global(ol),
     .foundation-step__body :global(table),
     .foundation-step__body :global(pre),
     .foundation-step__body :global(blockquote) {
-      text-align: start;
+      text-align: start !important;
       hyphens: manual;
     }
     .foundation-step__body :global(ul),
     .foundation-step__body :global(ol) {
-      margin: 0 0 1rem 0;
-      padding-left: 1.5rem;
+      margin: 0 0 1rem 0 !important;
+      padding-left: 1.5rem !important;
     }
     .foundation-step__body :global(li) {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.5rem !important;
     }
     .foundation-step__body :global(code) {
-      font-family: var(--nbg-ff-mono);
-      font-size: 0.95em;
-      background: var(--nbg-surface-2);
-      padding: 0.1em 0.35em;
-      border-radius: var(--nbg-r-sm);
+      font-family: var(--nbg-ff-mono) !important;
+      font-size: 0.95em !important;
+      background: var(--nbg-surface-2) !important;
+      padding: 0.1em 0.35em !important;
+      border-radius: var(--nbg-r-sm) !important;
+      color: var(--nbg-accent) !important;
     }
     .foundation-step__body :global(pre) {
-      background: var(--nbg-surface-2);
-      border: 1px solid var(--nbg-hairline);
-      border-radius: var(--nbg-r-md);
-      padding: 1rem;
-      overflow-x: auto;
+      background: var(--nbg-surface-2) !important;
+      border: 1px solid var(--nbg-hairline) !important;
+      border-radius: var(--nbg-r-md) !important;
+      padding: 1rem !important;
+      overflow-x: auto !important;
     }
     .foundation-step__body :global(table) {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0 1.5rem;
-      font-size: 0.9375rem;
+      width: 100% !important;
+      border-collapse: collapse !important;
+      margin: 1rem 0 1.5rem !important;
+      font-size: 0.9375rem !important;
     }
     .foundation-step__body :global(th),
     .foundation-step__body :global(td) {
-      text-align: left;
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid var(--nbg-hairline);
-      vertical-align: top;
+      text-align: left !important;
+      padding: 0.5rem 0.75rem !important;
+      border-bottom: 1px solid var(--nbg-hairline) !important;
+      vertical-align: top !important;
     }
     .foundation-step__body :global(th) {
-      font-family: var(--nbg-ff-mono);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--nbg-muted);
-      font-weight: 500;
-      border-bottom: 1px solid var(--nbg-border);
+      font-family: var(--nbg-ff-mono) !important;
+      font-size: 0.75rem !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.12em !important;
+      color: var(--nbg-muted) !important;
+      font-weight: 500 !important;
+      border-bottom: 1px solid var(--nbg-border) !important;
     }
     .foundation-step__body :global(strong) {
-      color: var(--nbg-ink);
-      font-weight: 600;
+      color: var(--nbg-ink) !important;
+      font-weight: 600 !important;
     }
 
     /* ─── F2 glass-of-water visual ─────────────────────────────── */

@@ -503,67 +503,71 @@ const heroSummary = entry.data.ai_summary;
       max-width: 48rem !important;
       scroll-margin-top: 5rem;
     }
+    /* !important throughout — Starlight's unlayered `.sl-markdown-content`
+       rules (p, blockquote, code, h3) beat our `@layer nbg.components`
+       declarations in production builds. Memory: feedback_starlight_unlayered. */
     .day-section__body {
       color: var(--nbg-ink);
       font-size: 1rem;
       line-height: 1.7;
-      text-align: justify;
+      text-align: justify !important;
       hyphens: auto;
       -webkit-hyphens: auto;
       word-spacing: 0;
     }
-    .day-section__body :global(p) { margin: 0 0 1rem 0; }
-    .day-section__body :global(p:last-child) { margin-bottom: 0; }
+    .day-section__body :global(p) { margin: 0 0 1rem 0 !important; }
+    .day-section__body :global(p:last-child) { margin-bottom: 0 !important; }
     .day-section__body :global(ul),
     .day-section__body :global(ol),
     .day-section__body :global(table),
     .day-section__body :global(pre),
     .day-section__body :global(blockquote) {
-      text-align: start;
+      text-align: start !important;
       hyphens: manual;
     }
     .day-section__body :global(ul),
     .day-section__body :global(ol) {
-      margin: 0 0 1rem 0;
-      padding-left: 1.5rem;
+      margin: 0 0 1rem 0 !important;
+      padding-left: 1.5rem !important;
     }
-    .day-section__body :global(li) { margin-bottom: 0.5rem; }
+    .day-section__body :global(li) { margin-bottom: 0.5rem !important; }
     .day-section__body :global(h3) {
-      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif);
-      font-weight: 500;
-      font-size: 1.25rem;
-      line-height: 1.25;
-      letter-spacing: -0.01em;
-      color: var(--nbg-ink);
-      margin: 1.75rem 0 0.75rem;
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.25rem !important;
+      line-height: 1.25 !important;
+      letter-spacing: -0.01em !important;
+      color: var(--nbg-ink) !important;
+      margin: 1.75rem 0 0.75rem !important;
     }
     .day-section__body :global(code) {
-      font-family: var(--nbg-ff-mono);
-      font-size: 0.95em;
-      background: var(--nbg-surface-2);
-      padding: 0.1em 0.35em;
-      border-radius: var(--nbg-r-sm);
+      font-family: var(--nbg-ff-mono) !important;
+      font-size: 0.95em !important;
+      background: var(--nbg-surface-2) !important;
+      padding: 0.1em 0.35em !important;
+      border-radius: var(--nbg-r-sm) !important;
+      color: var(--nbg-accent) !important;
     }
     .day-section__body :global(pre) {
-      background: var(--nbg-surface-2);
-      border: 1px solid var(--nbg-hairline);
-      border-radius: var(--nbg-r-md);
-      padding: 1rem;
-      overflow-x: auto;
+      background: var(--nbg-surface-2) !important;
+      border: 1px solid var(--nbg-hairline) !important;
+      border-radius: var(--nbg-r-md) !important;
+      padding: 1rem !important;
+      overflow-x: auto !important;
     }
     .day-section__body :global(blockquote) {
-      margin: 1rem 0;
-      padding: 0.75rem 1rem;
-      border-left: 3px solid var(--nbg-accent);
-      background: color-mix(in srgb, var(--nbg-accent) 5%, var(--nbg-surface));
-      color: var(--nbg-ink-2);
-      border-radius: 0 var(--nbg-r-sm) var(--nbg-r-sm) 0;
+      margin: 1rem 0 !important;
+      padding: 0.75rem 1rem !important;
+      border-left: 3px solid var(--nbg-accent) !important;
+      background: color-mix(in srgb, var(--nbg-accent) 5%, var(--nbg-surface)) !important;
+      color: var(--nbg-ink-2) !important;
+      border-radius: 0 var(--nbg-r-sm) var(--nbg-r-sm) 0 !important;
     }
-    .day-section__body :global(blockquote p) { margin: 0 0 0.5rem 0; }
-    .day-section__body :global(blockquote p:last-child) { margin-bottom: 0; }
+    .day-section__body :global(blockquote p) { margin: 0 0 0.5rem 0 !important; }
+    .day-section__body :global(blockquote p:last-child) { margin-bottom: 0 !important; }
     .day-section__body :global(strong) {
-      color: var(--nbg-ink);
-      font-weight: 600;
+      color: var(--nbg-ink) !important;
+      font-weight: 600 !important;
     }
 
     /* ─── Bottom Next card ─────────────────────────────────────── */

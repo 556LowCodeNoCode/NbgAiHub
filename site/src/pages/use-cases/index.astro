@@ -1,0 +1,570 @@
+---
+/**
+ * /use-cases — gallery of beginner-friendly worked examples.
+ *
+ * Reads the `usecases` content collection and renders one large card per
+ * use case. Each card is clickable — opens /use-cases/<slug>/ which renders
+ * the step-by-step body using the same Day-1 style docs layout.
+ *
+ * Hero vocabulary matches Foundations / Day 1 / Tips (per the listing-pages
+ * memory: hero scale + filter integration + parity with Foundations).
+ *
+ * Filter: business unit chips. Implemented inline (no shared TopicFilter)
+ * because the chip vocabulary is a closed enum from the schema, not a
+ * derived topic set — different semantics, simpler interaction.
+ *
+ * Cascade trap reminder: Starlight ships unlayered rules that beat
+ * `@layer nbg.components` in production builds. Every layout / spacing /
+ * typography rule below carries `!important` even where it looks redundant
+ * locally. See feedback_starlight_unlayered memory.
+ */
+import { getCollection } from 'astro:content';
+import MarketingShell from '../../components/MarketingShell.astro';
+import AudienceFilter from '../../components/AudienceFilter.astro';
+import { linkGlossaryTerms } from '../../lib/glossary-link-string';
+import '../../styles/listing-rows.css';
+
+const items = (await getCollection('usecases')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+const BUSINESS_UNIT_LABELS: Record<string, string> = {
+  retail: 'Retail',
+  'contact-center': 'Contact center',
+  compliance: 'Compliance',
+  mortgages: 'Mortgages',
+  operations: 'Operations',
+  'process-improvement': 'Process improvement',
+  hr: 'HR',
+  risk: 'Risk',
+  data: 'Data',
+  accounting: 'Accounting',
+};
+
+const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sort();
+---
+
+<MarketingShell
+  title="Use cases"
+  description="Six beginner-friendly worked examples you can try after Day 1 — each one tackles a real problem from somewhere in the bank."
+  surfaceId="use-cases"
+  width="full"
+  hero="none"
+>
+  <section class="hero hero--stack">
+    <div class="wrap">
+      <div class="hero__intro">
+        <h1 class="hero__title">Try it on <em>something real</em></h1>
+        <p class="hero__lede">
+          <Fragment set:html={linkGlossaryTerms("Six worked examples picked because they look like actual work — a stack of complaints, a policy diff, a regulator PDF. Pick one that resembles your day. Each takes 15–30 minutes the first time and a fraction of that once you've done it.")} />
+          <small>Audience: complete beginner · {items.length} use cases · all doable after Day 1</small>
+          <small><a href="/start-here/day-1/">→ haven't done Day 1 yet? Start there.</a></small>
+        </p>
+      </div>
+      <div class="hero__filter">
+        {/* Two filters stacked, same vocabulary as /tips and /skills:
+            SHOW (audience radios) on top, FILTER BY UNIT (multi-select
+            chips) below. Audience filter scope is the cards' `data-audience`
+            attribute; unit filter is a clone of TopicFilter wired to
+            `data-business-unit`. */}
+        <AudienceFilter scope=".usecase-card[data-audience]" />
+        <form
+          class="topic-filter not-content"
+          data-scope=".usecase-card[data-business-unit]"
+          aria-label="Filter by business unit"
+        >
+          <span class="topic-filter__label">Filter by unit</span>
+          <div class="topic-filter__group" role="group">
+            {allUnits.map((u) => (
+              <button
+                type="button"
+                class="topic-filter__chip"
+                data-topic={u}
+                aria-pressed="false"
+              >
+                {BUSINESS_UNIT_LABELS[u] ?? u}
+              </button>
+            ))}
+            <button
+              type="button"
+              class="topic-filter__clear"
+              data-topic-clear
+              hidden
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="usecase-gallery-section">
+    <div class="wrap">
+      <ul class="usecase-grid" role="list">
+        {items.map((u) => (
+          <li>
+            <a
+              class="usecase-card"
+              href={`/use-cases/${u.id}/`}
+              data-business-unit={u.data.business_unit}
+              data-audience={u.data.audience}
+              data-topics={u.data.topics.join(',')}
+            >
+              <div class="usecase-card__head">
+                <span class="usecase-card__eyebrow">
+                  {BUSINESS_UNIT_LABELS[u.data.business_unit] ?? u.data.business_unit}
+                </span>
+                <span class="usecase-card__time">{u.data.time_estimate}</span>
+              </div>
+              <h2 class="usecase-card__title">{u.data.title}</h2>
+              <p class="usecase-card__summary" set:html={linkGlossaryTerms(u.data.ai_summary)} />
+              <div class="usecase-card__outcome">
+                <span class="usecase-card__outcome-label">You end up with</span>
+                <p class="usecase-card__outcome-body">{u.data.outcome}</p>
+              </div>
+              <span class="usecase-card__cta">
+                Open the walkthrough <span aria-hidden="true">→</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <aside class="usecase-gallery-empty" id="usecase-empty" aria-live="polite">
+        <p class="usecase-gallery-empty__title">No use cases for that unit yet</p>
+        <p class="usecase-gallery-empty__body">More are coming — pick a different unit, or tap "All".</p>
+        <button type="button" class="usecase-gallery-empty__action" data-unit-clear>Show all</button>
+      </aside>
+    </div>
+  </section>
+
+  <section class="usecase-finale">
+    <div class="wrap">
+      <article class="usecase-finale__card">
+        <span class="usecase-finale__eyebrow">Pattern recognition</span>
+        <h2 class="usecase-finale__title">Notice the shape of all six</h2>
+        <p class="usecase-finale__lede">
+          Same five-step loop every time. Get the input as a file. Open Claude Code in the folder. Write the prompt as a briefing, not a one-liner. Review what came back. Save the prompt so the second run is a fraction of the first. Once that shape clicks, you'll start spotting it in your own work — and that's when the hub stops being a reference and starts being muscle memory.
+        </p>
+        <div class="usecase-finale__actions">
+          <a class="usecase-finale__cta usecase-finale__cta--primary" href="/tips/">
+            → Tips &amp; tricks for the prompts
+          </a>
+          <a class="usecase-finale__cta usecase-finale__cta--secondary" href="/skills/">
+            Or browse skills that automate the patterns
+          </a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <script is:inline>
+    (function () {
+      // Same semantics as the global TopicFilter component but scoped to
+      // use-case cards via `data-business-unit`. No "All" chip — zero
+      // pressed = show everything; "Clear" link appears when any chip is
+      // pressed. Multi-select OR across pressed chips.
+      var form = document.querySelector('.topic-filter[aria-label="Filter by business unit"]');
+      if (!form) return;
+      var chips = Array.from(form.querySelectorAll('.topic-filter__chip'));
+      var clearBtn = form.querySelector('[data-topic-clear]');
+      var cards = Array.from(document.querySelectorAll('.usecase-card[data-business-unit]'));
+      var empty = document.getElementById('usecase-empty');
+
+      function selected() {
+        return chips
+          .filter(function (c) { return c.getAttribute('aria-pressed') === 'true'; })
+          .map(function (c) { return c.dataset.topic; })
+          .filter(Boolean);
+      }
+
+      function apply() {
+        var sel = selected();
+        if (clearBtn) clearBtn.hidden = sel.length === 0;
+        cards.forEach(function (c) {
+          var match = sel.length === 0 || sel.indexOf(c.dataset.businessUnit) !== -1;
+          // ANDs with the AudienceFilter's `audience-hidden` class — the
+          // li display is computed in `recomputeVisibility` below so both
+          // filters cooperate.
+          c.classList.toggle('unit-hidden', !match);
+        });
+        recomputeVisibility();
+        // Notify any other listeners (none today; future-proof).
+        document.dispatchEvent(new CustomEvent('nbg:filters-changed'));
+      }
+
+      function recomputeVisibility() {
+        var visible = 0;
+        cards.forEach(function (c) {
+          var hidden =
+            c.classList.contains('audience-hidden') ||
+            c.classList.contains('unit-hidden');
+          var li = c.parentElement;
+          if (li) li.style.display = hidden ? 'none' : '';
+          if (!hidden) visible += 1;
+        });
+        if (empty) empty.setAttribute('data-visible', visible === 0 ? 'true' : 'false');
+      }
+
+      chips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          var pressed = chip.getAttribute('aria-pressed') === 'true';
+          chip.setAttribute('aria-pressed', pressed ? 'false' : 'true');
+          apply();
+        });
+      });
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+          chips.forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
+          apply();
+        });
+      }
+      // AudienceFilter dispatches `nbg:filters-changed` after applying its
+      // hidden class. Re-run our visibility coordinator on that signal.
+      document.addEventListener('nbg:filters-changed', recomputeVisibility);
+      apply();
+    })();
+  </script>
+</MarketingShell>
+
+<style>
+  @layer nbg.components {
+    /* ─── Hero filter spacing ──────────────────────────────────── */
+    /* listing-rows.css imports `.hero__filter { margin-top: 1.5rem }` so
+       the filter sits below the lede with the same gap as Tips/Skills.
+       Bump to 2.5rem on Use Cases because the hero copy is only two
+       paragraphs (Tips has more lede text); without the extra space the
+       filter felt crammed against the lede. */
+    .hero--stack .hero__filter {
+      margin-top: 2.5rem !important;
+    }
+
+    /* ─── Topic filter chip vocabulary (inlined-markup edition) ────
+       TopicFilter.astro's chip styles are scoped to that component, so
+       when we render `.topic-filter__*` markup directly in this page
+       they don't inherit. We re-declare the relevant rules here with
+       `:global()` so they apply to our inlined markup. Values mirror
+       TopicFilter.astro exactly — keep in sync if that component
+       changes. Wraps the whole `.topic-filter` in transparent chrome
+       so it reads as part of the hero, not a bordered widget. */
+    :global(.hero__filter .topic-filter) {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.4rem !important;
+      background: transparent !important;
+      border: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    :global(.hero__filter .topic-filter__label) {
+      font-family: var(--nbg-type-mono, var(--nbg-ff-mono, ui-monospace, monospace)) !important;
+      font-size: var(--nbg-fs-xs, 0.6875rem) !important;
+      font-weight: var(--nbg-fw-medium, 500) !important;
+      letter-spacing: var(--nbg-ls-wide, 0.16em) !important;
+      text-transform: uppercase !important;
+      color: var(--nbg-color-fg-muted, var(--nbg-muted, #5b6b80)) !important;
+    }
+    :global(.hero__filter .topic-filter__group) {
+      display: inline-flex !important;
+      flex-wrap: wrap !important;
+      gap: var(--nbg-sp-1, 0.4rem) !important;
+    }
+    :global(.hero__filter .topic-filter__chip) {
+      padding: 0.35rem 0.8rem !important;
+      font-family: var(--nbg-type-body, var(--nbg-ff-body)) !important;
+      font-size: var(--nbg-fs-sm, 0.8125rem) !important;
+      font-weight: var(--nbg-fw-medium, 500) !important;
+      line-height: 1.3 !important;
+      color: var(--nbg-color-fg-secondary, var(--nbg-ink-2, #1a3148)) !important;
+      background: var(--nbg-color-bg-page, transparent) !important;
+      border: 1px solid var(--nbg-color-border-subtle, var(--nbg-border, #dce3eb)) !important;
+      border-radius: var(--nbg-r-pill, 999px) !important;
+      cursor: pointer !important;
+      transition:
+        background-color 120ms ease,
+        color            120ms ease,
+        border-color     120ms ease !important;
+      user-select: none !important;
+    }
+    :global(.hero__filter .topic-filter__chip:hover) {
+      color: var(--nbg-color-fg-primary, var(--nbg-ink, #0b1e2e)) !important;
+      background: var(--nbg-color-bg-surface-hover, color-mix(in srgb, var(--nbg-accent, #007a8a) 6%, var(--nbg-surface, #ffffff))) !important;
+    }
+    :global(.hero__filter .topic-filter__chip[aria-pressed='true']) {
+      color: #ffffff !important;
+      background: var(--nbg-accent, #007a8a) !important;
+      border-color: var(--nbg-accent, #007a8a) !important;
+    }
+    :global(.hero__filter .topic-filter__chip:focus-visible) {
+      outline: 2px solid var(--nbg-accent, #007a8a) !important;
+      outline-offset: 2px !important;
+    }
+    :global(.hero__filter .topic-filter__clear) {
+      padding: 0.35rem 0.7rem !important;
+      font-family: var(--nbg-type-body, var(--nbg-ff-body)) !important;
+      font-size: var(--nbg-fs-sm, 0.8125rem) !important;
+      font-weight: var(--nbg-fw-medium, 500) !important;
+      color: var(--nbg-color-fg-muted, var(--nbg-muted, #5b6b80)) !important;
+      background: transparent !important;
+      border: 0 !important;
+      cursor: pointer !important;
+      text-decoration: underline !important;
+      text-underline-offset: 2px !important;
+    }
+    :global(.hero__filter .topic-filter__clear:hover) {
+      color: var(--nbg-color-fg-primary, var(--nbg-ink, #0b1e2e)) !important;
+    }
+    /* ─── Hero → first section gap (matches listing-rows.css) ──── */
+    .hero--stack:has(.hero__filter) {
+      padding-bottom: 1.5rem !important;
+      border-bottom: 0 !important;
+    }
+    .hero--stack:has(.hero__filter) + .usecase-gallery-section {
+      padding-block-start: 2rem !important;
+      border-top: 1px solid var(--nbg-hairline, #ebeff5);
+    }
+
+    /* ─── Gallery section + grid ───────────────────────────────── */
+    .usecase-gallery-section {
+      padding-block: 2.5rem 3rem !important;
+    }
+    .usecase-grid {
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 1.25rem !important;
+    }
+    .usecase-grid > li { margin: 0 !important; }
+    .usecase-grid > li::marker { content: '' !important; }
+    @media (max-width: 880px) {
+      .usecase-grid { grid-template-columns: 1fr !important; }
+    }
+
+    /* ─── Card ─────────────────────────────────────────────────── */
+    .usecase-card {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 100% !important;
+      padding: 1.5rem 1.5rem 1.625rem !important;
+      background: var(--nbg-surface, #ffffff) !important;
+      border: 1px solid var(--nbg-border, #dce3eb) !important;
+      border-radius: var(--nbg-r-lg, 12px) !important;
+      text-decoration: none !important;
+      color: inherit !important;
+      transition:
+        border-color 160ms ease,
+        background   160ms ease,
+        transform    160ms ease,
+        box-shadow   160ms ease !important;
+    }
+    .usecase-card:hover {
+      border-color: color-mix(in srgb, var(--nbg-accent, #007a8a) 55%, var(--nbg-border, #dce3eb)) !important;
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 3%, var(--nbg-surface, #ffffff)) !important;
+      transform: translateY(-2px) !important;
+      box-shadow: 0 14px 28px -22px color-mix(in srgb, var(--nbg-accent, #007a8a) 50%, transparent) !important;
+    }
+    .usecase-card:focus-visible {
+      outline: 2px solid var(--nbg-accent, #007a8a);
+      outline-offset: 2px;
+    }
+    .usecase-card__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--nbg-hairline, #ebeff5);
+    }
+    .usecase-card__eyebrow {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--nbg-accent, #007a8a);
+    }
+    .usecase-card__time {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.18rem 0.55rem;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--nbg-ink-2, #1a3148);
+      background: var(--nbg-surface-2, #f4f6fa);
+      border: 1px solid var(--nbg-hairline, #ebeff5);
+      border-radius: 999px;
+    }
+    .usecase-card .usecase-card__title {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.4rem !important;
+      line-height: 1.2 !important;
+      letter-spacing: -0.012em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 0 0 0.65rem 0 !important;
+    }
+    .usecase-card__summary {
+      margin: 0 0 1rem 0 !important;
+      font-size: 0.9375rem !important;
+      line-height: 1.55 !important;
+      color: var(--nbg-ink-2, #1a3148) !important;
+    }
+    .usecase-card__outcome {
+      margin-top: auto;
+      padding: 0.65rem 0.85rem 0.7rem;
+      border-left: 3px solid var(--nbg-accent, #007a8a);
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 6%, var(--nbg-surface-2, #f4f6fa));
+      border-radius: 0 6px 6px 0;
+    }
+    .usecase-card__outcome-label {
+      display: block;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--nbg-accent-ink, #00525c);
+      margin-bottom: 0.25rem;
+    }
+    .usecase-card__outcome-body {
+      margin: 0 !important;
+      font-size: 0.875rem !important;
+      line-height: 1.5 !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+    }
+    .usecase-card__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1rem;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--nbg-accent, #007a8a);
+    }
+    .usecase-card:hover .usecase-card__cta {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.25em;
+    }
+
+    /* ─── Empty state ──────────────────────────────────────────── */
+    .usecase-gallery-empty {
+      display: none;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      border: 1px dashed var(--nbg-border, #dce3eb);
+      border-radius: 12px;
+      color: var(--nbg-muted, #5b6b80);
+      margin-top: 1.5rem;
+    }
+    .usecase-gallery-empty[data-visible='true'] { display: block; }
+    .usecase-gallery-empty__title {
+      margin: 0 0 0.4rem;
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--nbg-ink, #0b1e2e);
+    }
+    .usecase-gallery-empty__body {
+      margin: 0 0 1rem;
+      font-size: 0.9375rem;
+    }
+    .usecase-gallery-empty__action {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      font-family: var(--nbg-ff-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--nbg-accent-ink, #00525c);
+      background: transparent;
+      border: 1px solid var(--nbg-accent, #007a8a);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    /* ─── Finale card ──────────────────────────────────────────── */
+    .usecase-finale {
+      padding-block: 2rem 4rem;
+    }
+    .usecase-finale__card {
+      padding: 2.5rem;
+      border: 1px solid color-mix(in srgb, var(--nbg-accent, #007a8a) 25%, var(--nbg-hairline, #ebeff5));
+      border-radius: var(--nbg-r-lg, 12px);
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 4%, var(--nbg-surface, #ffffff));
+      box-shadow: 0 12px 36px -28px color-mix(in srgb, var(--nbg-accent, #007a8a) 35%, transparent);
+    }
+    .usecase-finale__eyebrow {
+      display: inline-block;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--nbg-accent, #007a8a);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .usecase-finale .usecase-finale__title {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.875rem !important;
+      line-height: 1.15 !important;
+      letter-spacing: -0.015em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 0 0 0.75rem 0 !important;
+    }
+    .usecase-finale__lede {
+      margin: 0 0 1.5rem 0;
+      max-width: 56rem;
+      font-size: 1rem;
+      line-height: 1.65;
+      color: var(--nbg-ink-2, #1a3148);
+    }
+    .usecase-finale__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
+    }
+    .usecase-finale__cta {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.6rem 1.1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: background 120ms ease, border-color 120ms ease, filter 120ms ease;
+    }
+    .usecase-finale__cta--primary {
+      background: var(--nbg-accent, #007a8a);
+      color: #ffffff;
+      border: 1px solid var(--nbg-accent, #007a8a);
+    }
+    .usecase-finale__cta--primary:hover { filter: brightness(1.06); }
+    .usecase-finale__cta--secondary {
+      background: transparent;
+      color: var(--nbg-accent, #007a8a);
+      border: 1px solid color-mix(in srgb, var(--nbg-accent, #007a8a) 40%, var(--nbg-hairline, #ebeff5));
+      font-weight: 500;
+    }
+    .usecase-finale__cta--secondary:hover {
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 8%, transparent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .usecase-card,
+      .usecase-finale__cta {
+        transition: none !important;
+      }
+    }
+  }
+</style>

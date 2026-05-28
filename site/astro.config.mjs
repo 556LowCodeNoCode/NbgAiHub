@@ -168,6 +168,7 @@ export default defineConfig({
         { label: 'Home', link: '/' },
         { label: 'Foundations', link: '/start-here/foundations/' },
         { label: 'Day 1', link: '/start-here/day-1/' },
+        { label: 'Use Cases', link: '/use-cases/' },
         { label: 'Tips & Tricks', link: '/tips/' },
         { label: 'Skills', link: '/skills/' },
         { label: 'Glossary', link: '/glossary/' },

@@ -1,0 +1,989 @@
+---
+/**
+ * /use-cases/[slug] — step-by-step walkthrough for one use case.
+ *
+ * Mirrors the Day-1 docs-style layout: hero with outcome card + step preview,
+ * then a two-column main (240px sticky TOC | scrollable steps).
+ *
+ * The markdown body uses the `## Step N — Title` segmentation used by
+ * journeys/day-1.md and journeys/foundations.md, so the same parse-and-render
+ * pattern works here. Glossary auto-linking wires through the project remark
+ * plugin per project-design §S.14.
+ *
+ * Cascade gotchas: every layout/spacing/typography rule that must beat
+ * Starlight's unlayered cascade carries `!important`. See
+ * feedback_starlight_unlayered memory.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, getEntry } from 'astro:content';
+import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+import MarketingShell from '../../components/MarketingShell.astro';
+import remarkGlossaryLink from '../../plugins/remark-glossary-link.ts';
+import { linkGlossaryTerms } from '../../lib/glossary-link-string';
+
+export const getStaticPaths = (async () => {
+  const items = await getCollection('usecases');
+  return items.map((u) => ({ params: { slug: u.id } }));
+}) satisfies GetStaticPaths;
+
+const { slug } = Astro.params;
+if (!slug) {
+  throw new Error('use-cases detail page invoked without a slug param');
+}
+
+const entry = await getEntry('usecases', slug);
+if (!entry) {
+  throw new Error(`No usecases entry found for slug '${slug}'`);
+}
+
+const rawBody: string | undefined = entry.body;
+if (typeof rawBody !== 'string' || rawBody.trim().length === 0) {
+  throw new Error(
+    `usecases/${slug}.md has an empty body — expected '## Step N' segmented content.`,
+  );
+}
+
+interface ParsedStep {
+  n: number;
+  title: string;
+  bodyMd: string;
+}
+
+function splitSteps(body: string): { intro: string; steps: ParsedStep[] } {
+  const lines = body.split('\n');
+  const headingRe = /^##\s+Step\s+(\d+)\s*[—\-]\s*(.+?)\s*$/;
+  const introLines: string[] = [];
+  const steps: ParsedStep[] = [];
+  let current: ParsedStep | null = null;
+  for (const line of lines) {
+    const match = line.match(headingRe);
+    if (match && match[1] && match[2]) {
+      if (current) steps.push(current);
+      current = { n: Number.parseInt(match[1], 10), title: match[2], bodyMd: '' };
+      continue;
+    }
+    if (current) {
+      current.bodyMd += (current.bodyMd ? '\n' : '') + line;
+    } else {
+      introLines.push(line);
+    }
+  }
+  if (current) steps.push(current);
+  for (const step of steps) {
+    step.bodyMd = step.bodyMd.replace(/\n---\s*\n?\s*$/, '\n').trim();
+  }
+  return { intro: introLines.join('\n').trim(), steps };
+}
+
+const { intro, steps } = splitSteps(rawBody);
+
+if (steps.length === 0) {
+  throw new Error(
+    `usecases/${slug}.md contains no '## Step N' headings — use-case detail layout requires step segmentation.`,
+  );
+}
+
+const processor = await createMarkdownProcessor({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  remarkPlugins: [
+    [
+      remarkGlossaryLink as any,
+      { glossaryDir: '../glossary', excludePaths: ['/news/published/'] },
+    ],
+  ],
+});
+
+const renderedSteps = await Promise.all(
+  steps.map(async (step) => {
+    const result = await processor.render(step.bodyMd);
+    return { ...step, html: result.code };
+  }),
+);
+
+const introHtml = intro.length > 0 ? (await processor.render(intro)).code : '';
+
+// Short TOC labels: take everything before the first " — " in the step
+// title (use cases are written with concise step titles already).
+function shortLabel(title: string): string {
+  const sep = title.indexOf(' — ');
+  return sep === -1 ? title : title.slice(0, sep);
+}
+
+const BUSINESS_UNIT_LABELS: Record<string, string> = {
+  retail: 'Retail',
+  'contact-center': 'Contact center',
+  compliance: 'Compliance',
+  mortgages: 'Mortgages',
+  operations: 'Operations',
+  'process-improvement': 'Process improvement',
+  hr: 'HR',
+  risk: 'Risk',
+  data: 'Data',
+  accounting: 'Accounting',
+};
+
+// Sibling navigation — find the next use case by `order`, wrapping at the end.
+const allUsecases = (await getCollection('usecases')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const currentIdx = allUsecases.findIndex((u) => u.id === entry.id);
+const nextUsecase =
+  currentIdx >= 0 && currentIdx < allUsecases.length - 1
+    ? allUsecases[currentIdx + 1]
+    : allUsecases[0];
+
+const heroTitle = entry.data.title;
+const heroSummary = entry.data.ai_summary;
+const unitLabel = BUSINESS_UNIT_LABELS[entry.data.business_unit] ?? entry.data.business_unit;
+---
+
+<MarketingShell
+  title={heroTitle}
+  description={heroSummary}
+  surfaceId={`usecase-${entry.id}`}
+  width="full"
+  hero="none"
+  mode="reader"
+>
+  <section class="hero hero--stack">
+    <div class="wrap">
+      <div class="hero__intro">
+        <p class="usecase-hero__crumbs">
+          <a href="/use-cases/">← Use cases</a>
+          <span aria-hidden="true">·</span>
+          <span>{unitLabel}</span>
+        </p>
+        <h1 class="hero__title">{heroTitle}</h1>
+        <p class="hero__lede">
+          <Fragment set:html={linkGlossaryTerms(heroSummary)} />
+          <small>Audience: {entry.data.audience} · {entry.data.time_estimate} · {renderedSteps.length} steps</small>
+        </p>
+        {/* OS picker — controls which `[data-os="…"]` blocks render across
+            this page. Choice persists in localStorage so a reader who
+            picks Windows once stays on Windows across every use case.
+            Default = macOS (most common machine at NBG); JS swaps to
+            Windows on user click. */}
+        <div class="os-toggle" role="tablist" aria-label="Choose your OS for the commands below">
+          <span class="os-toggle__label">Your OS</span>
+          <button
+            type="button"
+            class="os-toggle__btn"
+            data-os-choice="mac"
+            role="tab"
+            aria-selected="true"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            macOS
+          </button>
+          <button
+            type="button"
+            class="os-toggle__btn"
+            data-os-choice="windows"
+            role="tab"
+            aria-selected="false"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M3 5.5L10.5 4.5V11.5H3V5.5zM3 12.5H10.5V19.5L3 18.5V12.5zM11.5 4.35L21 3V11.5H11.5V4.35zM11.5 12.5H21V21L11.5 19.65V12.5z"/>
+            </svg>
+            Windows
+          </button>
+        </div>
+      </div>
+
+      <div class="usecase-hero__cards">
+        <article class="usecase-hero__card usecase-hero__card--outcome">
+          <span class="usecase-hero__card-eyebrow">You'll end up with</span>
+          <p class="usecase-hero__card-body">{entry.data.outcome}</p>
+        </article>
+        {entry.data.inputs.length > 0 && (
+          <article class="usecase-hero__card usecase-hero__card--inputs">
+            <span class="usecase-hero__card-eyebrow">Before you start, you need</span>
+            <ul class="usecase-hero__inputs">
+              {entry.data.inputs.map((inp) => (<li>{inp}</li>))}
+            </ul>
+          </article>
+        )}
+      </div>
+
+      <nav class="journey-overview" aria-label="Steps in this use case">
+        <ol>
+          {renderedSteps.map((step) => (
+            <li>
+              <a href={`#u${step.n}`} data-step-id={`u${step.n}`}>
+                <span class="journey-overview__num">{String(step.n).padStart(2, '0')}</span>
+                <span class="journey-overview__label">{shortLabel(step.title)}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </div>
+  </section>
+
+  {introHtml.length > 0 && (
+    <section class="usecase-intro-section" id="intro">
+      <div class="wrap">
+        <div class="journey-intro sl-markdown-content" set:html={introHtml} />
+      </div>
+    </section>
+  )}
+
+  <div class="usecase-layout wrap">
+    <aside class="usecase-toc" aria-label="Steps in this use case">
+      <div class="usecase-toc__inner">
+        <span class="usecase-toc__eyebrow">Steps</span>
+        <nav>
+          <ol class="usecase-toc__list">
+            {renderedSteps.map((step) => (
+              <li>
+                <a href={`#u${step.n}`} data-toc-target={`u${step.n}`}>
+                  <span class="usecase-toc__label">{shortLabel(step.title)}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        <a class="usecase-toc__skip" href="/use-cases/">← Back to gallery</a>
+      </div>
+    </aside>
+
+    <div class="usecase-main">
+      {renderedSteps.map((step) => (
+        <section
+          class="usecase-section"
+          id={`u${step.n}`}
+          data-step={step.n}
+          aria-label={`Step ${step.n}: ${step.title}`}
+        >
+          <header class="usecase-section__head">
+            <span class="usecase-section__num">Step {String(step.n).padStart(2, '0')}</span>
+            <h2 class="usecase-section__title" set:html={step.title.replace(/`([^`]+)`/g, '<code>$1</code>')} />
+          </header>
+          <div class="usecase-section__prose">
+            <div class="usecase-section__body sl-markdown-content" set:html={step.html} />
+          </div>
+        </section>
+      ))}
+    </div>
+  </div>
+
+  {nextUsecase && nextUsecase.id !== entry.id && (
+    <section class="usecase-next" id="next">
+      <div class="wrap">
+        <article class="usecase-next__card">
+          <div class="usecase-next__body">
+            <span class="usecase-next__eyebrow">Next use case →</span>
+            <h2 class="usecase-next__title">{nextUsecase.data.title}</h2>
+            <p class="usecase-next__lede" set:html={linkGlossaryTerms(nextUsecase.data.ai_summary)} />
+            <div class="usecase-next__actions">
+              <a class="usecase-next__cta usecase-next__cta--primary" href={`/use-cases/${nextUsecase.id}/`}>
+                Open it →
+              </a>
+              <a class="usecase-next__cta usecase-next__cta--secondary" href="/use-cases/">
+                Back to all 6 use cases
+              </a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  )}
+</MarketingShell>
+
+<script is:inline>
+  // OS preference — runs as early as possible so the per-OS blocks render
+  // with the right `<html data-os-prefer>` attribute on first paint.
+  // Persisted in localStorage so the user keeps their OS choice across
+  // every use case detail page.
+  (function () {
+    var STORAGE_KEY = 'nbgaihub.os-prefer';
+    function readPref() {
+      try {
+        var v = localStorage.getItem(STORAGE_KEY);
+        if (v === 'mac' || v === 'windows') return v;
+      } catch (_) { /* localStorage blocked — fall through */ }
+      return 'mac';
+    }
+    function writePref(v) {
+      try { localStorage.setItem(STORAGE_KEY, v); } catch (_) { /* ignore */ }
+    }
+    function apply(v) {
+      document.documentElement.setAttribute('data-os-prefer', v);
+      document.querySelectorAll('.os-toggle__btn').forEach(function (btn) {
+        btn.setAttribute('aria-selected', btn.dataset.osChoice === v ? 'true' : 'false');
+      });
+    }
+    apply(readPref());
+    function bind() {
+      document.querySelectorAll('.os-toggle__btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var v = btn.dataset.osChoice === 'windows' ? 'windows' : 'mac';
+          writePref(v);
+          apply(v);
+        });
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind);
+    } else {
+      bind();
+    }
+  })();
+</script>
+
+<script is:inline>
+  (function () {
+    var overviewLinks = Array.from(document.querySelectorAll('.journey-overview [data-step-id]'));
+    var tocLinks = Array.from(document.querySelectorAll('.usecase-toc [data-toc-target]'));
+    var sections = Array.from(document.querySelectorAll('.usecase-section[id]'));
+    if (!sections.length) return;
+
+    function setActive(id) {
+      overviewLinks.forEach(function (a) {
+        var li = a.closest('li');
+        if (li) li.dataset.current = a.dataset.stepId === id ? 'true' : 'false';
+      });
+      tocLinks.forEach(function (a) {
+        if (a.getAttribute('data-toc-target') === id) a.setAttribute('data-active', '');
+        else a.removeAttribute('data-active');
+      });
+    }
+    setActive(sections[0].id);
+
+    if (!('IntersectionObserver' in window)) return;
+    var observer = new IntersectionObserver(function (entries) {
+      var visible = entries
+        .filter(function (e) { return e.isIntersecting; })
+        .sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (visible.length) setActive(visible[0].target.id);
+    }, { rootMargin: '-25% 0px -60% 0px', threshold: 0 });
+    sections.forEach(function (s) { observer.observe(s); });
+  })();
+</script>
+
+<style>
+  @layer nbg.components {
+    /* ─── OS toggle (segmented pair, lives inside the hero intro) ─ */
+    .os-toggle {
+      margin-top: 1.5rem !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.5rem 0.35rem 0.85rem;
+      background: var(--nbg-surface-2, #f4f6fa);
+      border: 1px solid var(--nbg-hairline, #ebeff5);
+      border-radius: var(--nbg-r-pill, 999px);
+    }
+    .os-toggle__label {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--nbg-muted, #5b6b80);
+      margin-right: 0.15rem;
+    }
+    .os-toggle__btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.75rem;
+      font-family: var(--nbg-ff-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--nbg-ink-2, #1a3148);
+      background: transparent;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+    .os-toggle__btn svg { flex-shrink: 0; }
+    .os-toggle__btn:hover {
+      color: var(--nbg-ink, #0b1e2e);
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 8%, transparent);
+    }
+    .os-toggle__btn[aria-selected='true'] {
+      background: var(--nbg-accent, #007a8a);
+      color: #ffffff;
+    }
+    .os-toggle__btn[aria-selected='true']:hover {
+      filter: brightness(1.05);
+    }
+    .os-toggle__btn:focus-visible {
+      outline: 2px solid var(--nbg-accent, #007a8a);
+      outline-offset: 2px;
+    }
+
+    /* ─── Per-OS visibility ────────────────────────────────────────
+       Markdown content uses `<div data-os="mac">…</div>` and
+       `<div data-os="windows">…</div>` to wrap OS-specific commands.
+       The toggle script sets `<html data-os-prefer="mac|windows">`;
+       these rules hide the non-matching block. Default state (no JS,
+       no toggle interaction) shows everything — so the page is still
+       readable for users with localStorage disabled.
+
+       CRITICAL — wrapped in :global() so they reach the `<div data-os>`
+       elements injected from `set:html` markdown content. Without
+       :global(), Astro scopes the selectors with this page's hash class
+       and they never match the unscoped markdown-rendered divs. */
+    :global(html[data-os-prefer='mac'] [data-os='windows']) {
+      display: none !important;
+    }
+    :global(html[data-os-prefer='windows'] [data-os='mac']) {
+      display: none !important;
+    }
+    /* Visual cue: the visible OS block gets a subtle accent left rule so
+       readers see "this is the bit selected for my OS". Also wrapped in
+       :global() — same reason as above. */
+    :global(.usecase-section__body [data-os='mac']),
+    :global(.usecase-section__body [data-os='windows']) {
+      border-left: 3px solid var(--nbg-accent, #007a8a);
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 4%, var(--nbg-surface, #ffffff));
+      border-radius: 0 var(--nbg-r-md, 8px) var(--nbg-r-md, 8px) 0;
+      padding: 0.85rem 1rem;
+      margin: 1rem 0;
+    }
+    :global(.usecase-section__body [data-os='mac'] p:last-child),
+    :global(.usecase-section__body [data-os='windows'] p:last-child) {
+      margin-bottom: 0 !important;
+    }
+    /* Pre blocks inside an OS block already get terminal styling below;
+       this just neutralises spacing around them. */
+    :global(.usecase-section__body [data-os='mac'] pre),
+    :global(.usecase-section__body [data-os='windows'] pre) {
+      margin-top: 0.75rem !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* ─── Hero crumbs ──────────────────────────────────────────── */
+    .usecase-hero__crumbs {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 0 0 0.5rem 0 !important;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--nbg-muted, #5b6b80);
+    }
+    .usecase-hero__crumbs a {
+      color: var(--nbg-accent, #007a8a);
+      text-decoration: none;
+    }
+    .usecase-hero__crumbs a:hover { text-decoration: underline; }
+
+    /* ─── Hero outcome + inputs side-by-side ───────────────────── */
+    .usecase-hero__cards {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 1rem !important;
+      margin-top: 1.5rem !important;
+      padding-top: 1.5rem !important;
+      border-top: 1px solid var(--nbg-hairline, #ebeff5) !important;
+    }
+    @media (max-width: 760px) {
+      .usecase-hero__cards { grid-template-columns: 1fr !important; }
+    }
+    /* !important margin: 0 — Starlight's unlayered `article + article` rule
+       adds a stray 16px top margin to the second card. Same gotcha pattern
+       as foundations.astro / day-1.astro side-by-side panels. */
+    .usecase-hero__card {
+      margin: 0 !important;
+      padding: 1.1rem 1.25rem 1.2rem !important;
+      border: 1px solid var(--nbg-hairline, #ebeff5) !important;
+      border-radius: var(--nbg-r-md, 8px) !important;
+      background: var(--nbg-surface, #ffffff) !important;
+    }
+    .usecase-hero__card--outcome {
+      border-color: color-mix(in srgb, var(--nbg-accent, #007a8a) 30%, var(--nbg-hairline, #ebeff5)) !important;
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 4%, var(--nbg-surface, #ffffff)) !important;
+    }
+    .usecase-hero__card-eyebrow {
+      display: block;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--nbg-accent-ink, #00525c);
+      margin-bottom: 0.45rem;
+    }
+    .usecase-hero__card--inputs .usecase-hero__card-eyebrow {
+      color: var(--nbg-muted, #5b6b80);
+    }
+    .usecase-hero__card-body {
+      margin: 0 !important;
+      font-size: 0.9375rem !important;
+      line-height: 1.5 !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+    }
+    .usecase-hero__inputs {
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .usecase-hero__inputs li {
+      margin: 0 !important;
+      padding-left: 1.1rem;
+      position: relative;
+      font-size: 0.875rem;
+      line-height: 1.45;
+      color: var(--nbg-ink-2, #1a3148);
+    }
+    .usecase-hero__inputs li::before {
+      content: '•';
+      position: absolute;
+      left: 0.25rem;
+      color: var(--nbg-accent, #007a8a);
+      font-weight: 700;
+    }
+
+    /* ─── Step overview cards ──────────────────────────────────── */
+    /* Mirrors .journey-overview from foundations.astro / day-1.astro
+       — same chrome, same grid, same hover lift. */
+    .journey-overview {
+      margin-top: 2rem;
+      padding-top: 1.75rem;
+      border-top: 1px solid var(--nbg-hairline, #ebeff5);
+    }
+    .journey-overview ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    .journey-overview li { margin: 0; }
+    .journey-overview a {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.875rem 0.875rem 1rem;
+      border: 1px solid var(--nbg-hairline, #ebeff5);
+      border-radius: var(--nbg-r-md, 8px);
+      background: var(--nbg-surface, #ffffff);
+      color: var(--nbg-ink-2, #1a3148);
+      text-decoration: none;
+      transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+      height: 100%;
+    }
+    .journey-overview a:hover {
+      border-color: color-mix(in srgb, var(--nbg-accent, #007a8a) 50%, var(--nbg-hairline, #ebeff5));
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 4%, var(--nbg-surface, #ffffff));
+      transform: translateY(-1px);
+    }
+    .journey-overview a:focus-visible {
+      outline: 2px solid var(--nbg-accent, #007a8a);
+      outline-offset: 2px;
+    }
+    .journey-overview li[data-current='true'] a {
+      border-color: var(--nbg-accent, #007a8a);
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 8%, var(--nbg-surface, #ffffff));
+    }
+    .journey-overview__num {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      color: var(--nbg-accent, #007a8a);
+      font-weight: 600;
+      padding-top: 0.1rem;
+      flex: 0 0 auto;
+    }
+    .journey-overview__label {
+      font-family: var(--nbg-ff-body);
+      font-size: 0.9375rem;
+      line-height: 1.3;
+      color: var(--nbg-ink, #0b1e2e);
+      letter-spacing: -0.005em;
+    }
+    @media (max-width: 75rem) {
+      .journey-overview ol { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 48rem) {
+      .journey-overview ol { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 30rem) {
+      .journey-overview ol { grid-template-columns: 1fr; gap: 0.5rem; }
+      .journey-overview a { padding: 0.75rem 0.875rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .journey-overview a { transition: none; }
+    }
+
+    /* ─── Intro (above two-column main) ────────────────────────── */
+    .usecase-intro-section {
+      padding-block: 1rem !important;
+    }
+    .journey-intro {
+      color: var(--nbg-ink-2, #1a3148);
+      font-size: 1.0625rem;
+      line-height: 1.7;
+    }
+    .journey-intro :global(p) { margin: 0 0 1rem 0 !important; }
+    .journey-intro :global(p:last-child) { margin-bottom: 0 !important; }
+    .journey-intro :global(hr) { display: none !important; }
+    .journey-intro :global(blockquote) {
+      margin: 1rem 0 !important;
+      padding: 0.75rem 1rem !important;
+      border-left: 3px solid var(--nbg-accent, #007a8a) !important;
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 5%, var(--nbg-surface, #ffffff)) !important;
+      color: var(--nbg-ink-2, #1a3148) !important;
+      border-radius: 0 var(--nbg-r-sm, 4px) var(--nbg-r-sm, 4px) 0 !important;
+    }
+
+    /* ─── Two-column docs layout ───────────────────────────────── */
+    .usecase-layout {
+      display: grid !important;
+      grid-template-columns: 240px minmax(0, 1fr) !important;
+      gap: 3rem !important;
+      padding-block: 1rem 2rem !important;
+      align-items: start !important;
+    }
+    @media (max-width: 960px) {
+      .usecase-layout {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+      }
+    }
+
+    /* ─── Sticky TOC sidebar ───────────────────────────────────── */
+    .usecase-toc {
+      position: sticky !important;
+      top: 5rem !important;
+      align-self: start !important;
+    }
+    @media (max-width: 960px) {
+      .usecase-toc {
+        position: static !important;
+        border: 1px solid var(--nbg-hairline, #ebeff5) !important;
+        border-radius: var(--nbg-r-md, 8px) !important;
+        padding: 1rem !important;
+        background: var(--nbg-surface, #ffffff) !important;
+      }
+    }
+    .usecase-toc__inner {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 1rem !important;
+    }
+    .usecase-toc__eyebrow {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--nbg-muted, #5b6b80);
+      font-weight: 500;
+    }
+    .usecase-toc__list {
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.125rem !important;
+      border-left: 2px solid var(--nbg-hairline, #ebeff5) !important;
+    }
+    .usecase-toc__list a {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      margin-left: -2px;
+      border-left: 2px solid transparent;
+      color: var(--nbg-muted, #5b6b80);
+      text-decoration: none;
+      font-size: 0.875rem;
+      line-height: 1.35;
+      transition: color 120ms ease, border-color 120ms ease;
+    }
+    .usecase-toc__list a:hover { color: var(--nbg-ink, #0b1e2e); }
+    .usecase-toc__list a[data-active] {
+      color: var(--nbg-accent, #007a8a);
+      border-left-color: var(--nbg-accent, #007a8a);
+      font-weight: 600;
+    }
+    .usecase-toc__skip {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.75rem;
+      color: var(--nbg-accent, #007a8a);
+      text-decoration: none;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--nbg-hairline, #ebeff5);
+      letter-spacing: 0.04em;
+    }
+    .usecase-toc__skip:hover { text-decoration: underline; }
+
+    /* ─── Main column sections ─────────────────────────────────── */
+    .usecase-main {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4rem !important;
+      min-width: 0 !important;
+    }
+    @media (max-width: 960px) {
+      .usecase-main { gap: 3rem !important; }
+    }
+    .usecase-section {
+      padding: 0 !important;
+      scroll-margin-top: 5rem !important;
+    }
+    .usecase-section__head {
+      margin-bottom: 1.5rem !important;
+      padding-bottom: 1rem !important;
+      border-bottom: 1px solid var(--nbg-hairline, #ebeff5) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.4rem !important;
+    }
+    .usecase-section__num {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--nbg-accent, #007a8a);
+    }
+    .usecase-section .usecase-section__title {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.75rem !important;
+      line-height: 1.18 !important;
+      letter-spacing: -0.015em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 0 !important;
+    }
+    .usecase-section .usecase-section__title :global(code) {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.85em;
+      background: var(--nbg-surface-2, #f4f6fa);
+      padding: 0.1em 0.35em;
+      border-radius: var(--nbg-r-sm, 4px);
+    }
+
+    /* ─── Body prose ───────────────────────────────────────────── */
+    .usecase-section__prose {
+      max-width: 48rem !important;
+      scroll-margin-top: 5rem;
+    }
+    .usecase-section__body {
+      color: var(--nbg-ink, #0b1e2e);
+      font-size: 1rem;
+      line-height: 1.7;
+      text-align: justify !important;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      word-spacing: 0;
+    }
+    .usecase-section__body :global(p) { margin: 0 0 1rem 0 !important; }
+    .usecase-section__body :global(p:last-child) { margin-bottom: 0 !important; }
+    .usecase-section__body :global(ul),
+    .usecase-section__body :global(ol),
+    .usecase-section__body :global(table),
+    .usecase-section__body :global(pre),
+    .usecase-section__body :global(blockquote) {
+      text-align: start !important;
+      hyphens: manual;
+    }
+    .usecase-section__body :global(ul),
+    .usecase-section__body :global(ol) {
+      margin: 0 0 1rem 0 !important;
+      padding-left: 1.5rem !important;
+    }
+    .usecase-section__body :global(li) { margin-bottom: 0.5rem !important; }
+    .usecase-section__body :global(code) {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace) !important;
+      font-size: 0.95em !important;
+      background: var(--nbg-surface-2, #f4f6fa) !important;
+      padding: 0.1em 0.35em !important;
+      border-radius: var(--nbg-r-sm, 4px) !important;
+      color: var(--nbg-accent, #007a8a) !important;
+    }
+    /* ─── Terminal-styled pre blocks ────────────────────────────────
+       Use cases are full of shell commands. Plain Shiki-on-page renders
+       them on a near-white surface which reads as "code" rather than
+       "command you type". Restyled here as a small terminal window:
+       three coloured dots top-left, dark teal background, light
+       cream-on-teal text. Shiki tokens are hard-overridden to inherit
+       so the dark theme reads consistently regardless of which Shiki
+       theme matches the page (the project ships dual-themed code blocks). */
+    .usecase-section__body :global(pre) {
+      position: relative !important;
+      background: var(--nbg-c-teal-900, #052329) !important;
+      border: 1px solid var(--nbg-c-teal-800, #0a3a42) !important;
+      border-radius: var(--nbg-r-md, 8px) !important;
+      padding: 2.25rem 1rem 1rem !important;
+      overflow-x: auto !important;
+      color: #e0f2f4 !important;
+      box-shadow: 0 8px 24px -16px color-mix(in srgb, var(--nbg-c-teal-900, #052329) 60%, transparent);
+    }
+    /* Fake terminal chrome — three coloured dots in the top-left.
+       SVG-via-background-image so the dots are crisp on any zoom. */
+    .usecase-section__body :global(pre::before) {
+      content: '';
+      position: absolute;
+      top: 0.625rem;
+      left: 0.85rem;
+      width: 38px;
+      height: 12px;
+      background-image:
+        radial-gradient(circle at 4px 4px, #ff5f56 4px, transparent 4.5px),
+        radial-gradient(circle at 18px 4px, #ffbd2e 4px, transparent 4.5px),
+        radial-gradient(circle at 32px 4px, #27c93f 4px, transparent 4.5px);
+      background-repeat: no-repeat;
+      opacity: 0.85;
+    }
+    /* Optional faint "$" prompt marker on the right side. */
+    .usecase-section__body :global(pre::after) {
+      content: 'TERMINAL';
+      position: absolute;
+      top: 0.7rem;
+      right: 0.9rem;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.625rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: color-mix(in srgb, #e0f2f4 50%, transparent);
+    }
+    /* Override Shiki's per-token inline colors so the terminal text
+       reads white-on-dark. Shiki emits `style="color:..."` on every
+       <span>; we beat it with !important on the inherit color. */
+    .usecase-section__body :global(pre code),
+    .usecase-section__body :global(pre code span) {
+      color: #e0f2f4 !important;
+      background: transparent !important;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace) !important;
+      font-size: 0.875rem !important;
+      line-height: 1.6 !important;
+    }
+    /* Inline `code` (not inside a pre) keeps the regular subtle pill —
+       this rule re-asserts the inline treatment so it doesn't inherit
+       the terminal palette above. */
+    .usecase-section__body :global(:not(pre) > code) {
+      background: var(--nbg-surface-2, #f4f6fa) !important;
+      color: var(--nbg-accent, #007a8a) !important;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace) !important;
+      font-size: 0.95em !important;
+      padding: 0.1em 0.35em !important;
+      border-radius: var(--nbg-r-sm, 4px) !important;
+    }
+    .usecase-section__body :global(blockquote) {
+      margin: 1.25rem 0 !important;
+      padding: 0.85rem 1.1rem !important;
+      border-left: 3px solid var(--nbg-accent, #007a8a) !important;
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 6%, var(--nbg-surface, #ffffff)) !important;
+      color: var(--nbg-ink-2, #1a3148) !important;
+      border-radius: 0 var(--nbg-r-sm, 4px) var(--nbg-r-sm, 4px) 0 !important;
+    }
+    .usecase-section__body :global(blockquote p) { margin: 0 0 0.5rem 0 !important; }
+    .usecase-section__body :global(blockquote p:last-child) { margin-bottom: 0 !important; }
+    .usecase-section__body :global(blockquote strong) {
+      color: var(--nbg-accent-ink, #00525c) !important;
+    }
+    .usecase-section__body :global(h3) {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.2rem !important;
+      line-height: 1.25 !important;
+      letter-spacing: -0.01em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 1.75rem 0 0.75rem !important;
+    }
+    .usecase-section__body :global(strong) {
+      color: var(--nbg-ink, #0b1e2e) !important;
+      font-weight: 600 !important;
+    }
+    .usecase-section__body :global(a) {
+      color: var(--nbg-accent, #007a8a) !important;
+      text-decoration: underline !important;
+      text-decoration-thickness: 1px !important;
+      text-underline-offset: 0.2em !important;
+    }
+    .usecase-section__body :global(a:hover),
+    .usecase-section__body :global(a:focus-visible) {
+      text-decoration-thickness: 2px !important;
+    }
+
+    /* ─── Bottom Next card ─────────────────────────────────────── */
+    .usecase-next {
+      padding-block: 3rem 4rem;
+    }
+    .usecase-next__card {
+      padding: 2.5rem;
+      border: 1px solid color-mix(in srgb, var(--nbg-accent, #007a8a) 30%, var(--nbg-hairline, #ebeff5));
+      border-radius: var(--nbg-r-lg, 12px);
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 5%, var(--nbg-surface, #ffffff));
+      box-shadow: 0 12px 36px -24px color-mix(in srgb, var(--nbg-accent, #007a8a) 35%, transparent);
+    }
+    .usecase-next__eyebrow {
+      display: inline-block;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--nbg-accent, #007a8a);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .usecase-next .usecase-next__title {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.875rem !important;
+      line-height: 1.15 !important;
+      letter-spacing: -0.015em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 0 0 0.75rem 0 !important;
+    }
+    .usecase-next__lede {
+      margin: 0 0 1.5rem 0;
+      max-width: 48rem;
+      font-size: 1rem;
+      line-height: 1.55;
+      color: var(--nbg-ink-2, #1a3148);
+    }
+    .usecase-next__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .usecase-next__cta {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.7rem 1.2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      transition: background 120ms ease, border-color 120ms ease, filter 120ms ease;
+    }
+    .usecase-next__cta--primary {
+      background: var(--nbg-accent, #007a8a);
+      color: #ffffff;
+      border: 1px solid var(--nbg-accent, #007a8a);
+    }
+    .usecase-next__cta--primary:hover { filter: brightness(1.06); }
+    .usecase-next__cta--secondary {
+      background: transparent;
+      color: var(--nbg-accent, #007a8a);
+      border: 1px solid color-mix(in srgb, var(--nbg-accent, #007a8a) 40%, var(--nbg-hairline, #ebeff5));
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+    .usecase-next__cta--secondary:hover {
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 8%, transparent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .usecase-toc__list a,
+      .usecase-next__cta,
+      .journey-overview a {
+        transition: none;
+      }
+    }
+  }
+</style>

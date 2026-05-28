@@ -6,6 +6,18 @@ Per CLAUDE.md doc-hygiene: each entry ≤20 lines, structured as Decision (bulle
 
 ---
 
+## 2026-05-29 — Use Cases v3 follow-up: `:global()` scope fixes for filter chips + OS toggle
+
+**Decision:**
+- **Topic-filter chip styles on `/use-cases/` were inert.** Cause: `.topic-filter__chip` etc. live in `TopicFilter.astro`'s component-scoped `<style>` block, which only emits the `:where(.astro-XXXX)` hash for elements TopicFilter itself renders. The gallery page inlines the same class names without rendering the component, so the chip styles never applied — rendered as default `<button>` text + a thin grey border. Fix: re-declared `.topic-filter`, `.topic-filter__label`, `.topic-filter__group`, `.topic-filter__chip` (+hover/pressed/focus), and `.topic-filter__clear` inside `site/src/pages/use-cases/index.astro`'s `<style>` block wrapped in `:global()` so Astro doesn't scope them away. Values mirror TopicFilter exactly with token fallbacks; both files stay visually identical to /tips and /skills.
+- **OS toggle didn't actually swap visible commands.** Cause: same scoping bug at a different layer — the per-OS visibility rules (`html[data-os-prefer='mac'] [data-os='windows'] { display: none }`) were emitted with this-page's hash, but the `<div data-os="mac">` / `<div data-os="windows">` blocks come from `set:html` markdown content and don't carry the hash. Fix: wrapped all three visibility rules + the visual-cue rules (left rule, surface tint, `:last-child` margin, inner `pre` spacing) in `:global()` inside `[slug].astro`. Verified end-to-end with Puppeteer: on load `mac → block / windows → none`; after Windows click `mac → none / windows → block`. localStorage persistence across pages works.
+
+**Why:** Astro scopes every selector in a non-`is:global` `<style>` block by appending a hash class to elements the component renders. Anything coming from `set:html` (markdown bodies, raw HTML strings) doesn't get the hash, so the selectors silently never match. Both bugs traced to the same trap. Standing rule for the project now lives in `CLAUDE.md` repo-layout line for `usecases/`: any selector targeting markdown-rendered HTML on this page needs `:global()`.
+
+**Refs:** `site/src/pages/use-cases/index.astro` (chip styles), `site/src/pages/use-cases/[slug].astro` (OS visibility), `CLAUDE.md` (usecases layout line). Verified live with Puppeteer + headless screenshots.
+
+---
+
 ## 2026-05-29 — Tips: overhaul (UX rethink, content expansion 18→27, "Survival keys" → "Control keys")
 
 **Decision:**

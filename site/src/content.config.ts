@@ -173,6 +173,41 @@ const journeys = defineCollection({
   schema: z.object(baseShape('journey-step')),
 });
 
+// ─── usecases ──────────────────────────────────────────────────────────
+// Beginner-friendly worked examples bank colleagues can try after Day 1.
+// Schema extends `baseShape('usecase')` with use-case-specific fields:
+//   - business_unit: which side of the bank the use case is anchored to
+//   - time_estimate: free text like "~25 min" (small wall-clock estimate)
+//   - difficulty:    'beginner' | 'intermediate' — gallery filter handle
+//   - order:         stable display order for the gallery (low → high)
+//   - outcome:       one-sentence "what you'll end up with"
+//   - inputs:        bullet list of preconditions for the use case
+// The markdown body is `## Step N — Title` segmented, same shape Day 1
+// and Foundations use, so the detail page can reuse that parser verbatim.
+const usecases = defineCollection({
+  loader: glob({ pattern: '*.md', base: '../usecases' }),
+  schema: z.object({
+    ...baseShape('usecase'),
+    business_unit: z.enum([
+      'retail',
+      'contact-center',
+      'compliance',
+      'mortgages',
+      'operations',
+      'process-improvement',
+      'hr',
+      'risk',
+      'data',
+      'accounting',
+    ]),
+    time_estimate: z.string().min(1).max(40),
+    difficulty: z.enum(['beginner', 'intermediate']),
+    order: z.number().int().min(0),
+    outcome: z.string().min(1).max(400),
+    inputs: z.array(z.string().min(1)).default([]),
+  }),
+});
+
 // ─── docs ──────────────────────────────────────────────────────────────
 // Starlight's built-in `docs` collection — backs `src/content/docs/` and
 // powers the splash homepage (`index.mdx`). Required by Starlight 0.39.
@@ -181,4 +216,4 @@ const docs = defineCollection({
   schema: docsSchema(),
 });
 
-export const collections = { docs, news, skills, tips, glossary, journeys };
+export const collections = { docs, news, skills, tips, glossary, journeys, usecases };

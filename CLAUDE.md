@@ -31,8 +31,9 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 │   └── published/             ← editor moves approved items here (permanent archive)
 ├── glossary/                  ← terms catalog (count in AUTO block below); auto-linked across content via the remark-glossary-link plugin (see §S.14). Authoring: docs/reference/authoring-glossary-terms.md.
 ├── skills/                    ← entries cataloguing 556LowCodeNoCode/Skills marketplace (extended 17-key schema lives in site/src/content.config.ts)
-├── tips/                      ← entries (prompting, survival keys, context, compliance)
+├── tips/                      ← entries (prompting, control keys, context, compliance)
 ├── journeys/                  ← day-1.md (full 6-step walkthrough) + foundations.md (newcomer onboarding); week-1.md + by-role TBD
+├── usecases/                  ← 12 beginner-friendly worked examples across 10 business units (Retail, Contact center, Compliance ×2, Mortgages, Operations, HR, Risk, Data, Accounting, Process improvement, Operations multilingual). Same `## Step N — Title` body shape as journeys/. Mac/Windows divergent commands wrapped in `<div data-os="mac">` / `<div data-os="windows">` blocks consumed by the OS toggle on the detail page. Per-OS visibility rules in `site/src/pages/use-cases/[slug].astro` MUST be wrapped in `:global()` because the divs come from `set:html` markdown content and don't carry the Astro scope hash.
 ├── pipeline/                  ← TypeScript workspace for the RSS Action + skill validator
 │   ├── package.json           ← Node 22, ESM, vitest 4.x, @rowanmanning/feed-parser
 │   ├── src/                   ← 15 RSS modules + src/validators/ (skill, cli, config)
@@ -89,7 +90,7 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 | Pillar | Files |
 |---|---|
 | Glossary | 45 |
-| Tips | 18 |
+| Tips | 27 |
 | Skills | 6 |
 | Journeys | 2 |
 | News (published) | 48 |

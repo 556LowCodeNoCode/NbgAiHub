@@ -20,7 +20,6 @@
  */
 import { getCollection } from 'astro:content';
 import MarketingShell from '../../components/MarketingShell.astro';
-import AudienceFilter from '../../components/AudienceFilter.astro';
 import { linkGlossaryTerms } from '../../lib/glossary-link-string';
 import '../../styles/listing-rows.css';
 
@@ -62,12 +61,9 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
         </p>
       </div>
       <div class="hero__filter">
-        {/* Two filters stacked, same vocabulary as /tips and /skills:
-            SHOW (audience radios) on top, FILTER BY UNIT (multi-select
-            chips) below. Audience filter scope is the cards' `data-audience`
-            attribute; unit filter is a clone of TopicFilter wired to
-            `data-business-unit`. */}
-        <AudienceFilter scope=".usecase-card[data-audience]" />
+        {/* Unit filter only. Audience filter was removed 2026-05-29 —
+            every use case is meant to be readable by everyone, so the
+            beginner/experienced distinction added noise without value. */}
         <form
           class="topic-filter not-content"
           data-scope=".usecase-card[data-business-unit]"
@@ -108,7 +104,6 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
               class="usecase-card"
               href={`/use-cases/${u.id}/`}
               data-business-unit={u.data.business_unit}
-              data-audience={u.data.audience}
               data-topics={u.data.topics.join(',')}
             >
               <div class="usecase-card__head">
@@ -182,27 +177,12 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
       function apply() {
         var sel = selected();
         if (clearBtn) clearBtn.hidden = sel.length === 0;
-        cards.forEach(function (c) {
-          var match = sel.length === 0 || sel.indexOf(c.dataset.businessUnit) !== -1;
-          // ANDs with the AudienceFilter's `audience-hidden` class — the
-          // li display is computed in `recomputeVisibility` below so both
-          // filters cooperate.
-          c.classList.toggle('unit-hidden', !match);
-        });
-        recomputeVisibility();
-        // Notify any other listeners (none today; future-proof).
-        document.dispatchEvent(new CustomEvent('nbg:filters-changed'));
-      }
-
-      function recomputeVisibility() {
         var visible = 0;
         cards.forEach(function (c) {
-          var hidden =
-            c.classList.contains('audience-hidden') ||
-            c.classList.contains('unit-hidden');
+          var match = sel.length === 0 || sel.indexOf(c.dataset.businessUnit) !== -1;
           var li = c.parentElement;
-          if (li) li.style.display = hidden ? 'none' : '';
-          if (!hidden) visible += 1;
+          if (li) li.style.display = match ? '' : 'none';
+          if (match) visible += 1;
         });
         if (empty) empty.setAttribute('data-visible', visible === 0 ? 'true' : 'false');
       }
@@ -220,9 +200,6 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
           apply();
         });
       }
-      // AudienceFilter dispatches `nbg:filters-changed` after applying its
-      // hidden class. Re-run our visibility coordinator on that signal.
-      document.addEventListener('nbg:filters-changed', recomputeVisibility);
       apply();
     })();
   </script>

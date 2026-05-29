@@ -44,4 +44,12 @@ Do not write files. Do not run shell commands beyond grep.
 
 Then from a normal Claude session: *"Use the codebase-explorer subagent to find every place we call `chargeCard`."*
 
+## Don't write the agent file by hand — ask Claude
+
+The frontmatter shape above is the official format, but you don't need to type it from scratch. Describe the subagent's job and let Claude scaffold the file:
+
+> Create a `codebase-explorer` subagent under `.claude/agents/`. It should be read-only — grep, glob, and read files but never write or run shell commands. Returns a one-paragraph summary plus a structured findings list.
+
+Claude writes the markdown, including the `tools` restriction and the prompt body. Review the diff. The subagent is callable from the next prompt onwards.
+
 Trade-off worth naming: a subagent can't reason about the broader plan it's part of. If you push too much logic into subagents, your main Claude loses the holistic view of what's happening. Use them for *bounded* reads, not for the thinking that decides what to do next.

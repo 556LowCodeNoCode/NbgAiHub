@@ -32,4 +32,10 @@ Two rules that keep this from bloating:
 
 CLAUDE.md is shared (it's in git). When you write down a rule, you're teaching the next colleague too. The file is the team's collective memory written in a form Claude can read.
 
+The meta-trick: you don't have to open the file yourself. When you catch Claude making a mistake, say:
+
+> That's wrong — we always do X instead. Add a one-line rule to `CLAUDE.md` in the right section so this doesn't happen again next session.
+
+Claude opens CLAUDE.md, picks the right section, adds the rule, and shows you the diff. The habit becomes typing one sentence instead of editing a file every time.
+
 Pair this with the *Worked CLAUDE.md example* tip for the shape, and the *Keep CLAUDE.md clean* tip for what to trim.

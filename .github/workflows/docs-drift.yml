@@ -14,6 +14,7 @@ on:
       - "glossary/**"
       - "tips/**"
       - "skills/**"
+      - "usecases/**"
       - "journeys/**"
       - "news/published/**"
       - "scripts/sync-doc-counts.mjs"

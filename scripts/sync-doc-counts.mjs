@@ -55,6 +55,7 @@ const counts = {
   tips: countMd("tips"),
   skills: countMd("skills"),
   journeys: countMd("journeys"),
+  usecases: countMd("usecases"),
   news: countMd("news/published"),
 };
 
@@ -74,6 +75,7 @@ function renderCountsBlock() {
     `| Glossary | ${counts.glossary} |`,
     `| Tips | ${counts.tips} |`,
     `| Skills | ${counts.skills} |`,
+    `| Use Cases | ${counts.usecases} |`,
     `| Journeys | ${counts.journeys} |`,
     `| News (published) | ${counts.news} |`,
   ].join("\n");
@@ -137,7 +139,7 @@ for (const t of targets) {
 
 console.log("");
 console.log(
-  `counts: glossary=${counts.glossary} tips=${counts.tips} skills=${counts.skills} journeys=${counts.journeys} news=${counts.news}`,
+  `counts: glossary=${counts.glossary} tips=${counts.tips} skills=${counts.skills} usecases=${counts.usecases} journeys=${counts.journeys} news=${counts.news}`,
 );
 if (tests) {
   const c = (t) => (t ? `${t.total}` : "?");

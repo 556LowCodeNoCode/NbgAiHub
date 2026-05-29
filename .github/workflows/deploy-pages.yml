@@ -17,6 +17,7 @@ on:
       - 'tips/**'
       - 'skills/**'
       - 'journeys/**'
+      - 'usecases/**'
       - 'news/published/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:

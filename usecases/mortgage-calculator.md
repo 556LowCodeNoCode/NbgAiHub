@@ -31,7 +31,7 @@ The mortgage front-line team uses a half-dozen recurring calculations — debt-s
 
 You're going to make a fresh folder on your Desktop and start Claude inside it. Three lines.
 
-**Open the Terminal app.** Pick your OS at the top of this page if you haven't already.
+**Open the Terminal app.**
 
 <div data-os="mac">
 
@@ -43,6 +43,9 @@ Press ⌘+Space, type "Terminal", and press Enter.
 
 Open the Start menu (press the Windows key), type "Ubuntu", and press Enter. If you don't see Ubuntu listed, [install WSL first](/start-here/day-1/#d1).
 
+In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-username>/Desktop`) — **not** the Windows desktop you see in File Explorer at `C:\Users\...\Desktop`. That's fine: the files are real and Claude can read and write them. Anywhere this use case says "open in Finder / File Explorer", run `explorer.exe .` from your Ubuntu terminal — Windows opens that exact WSL folder in Explorer.
+
+
 </div>
 
 Type each command and press Enter.
@@ -50,14 +53,14 @@ Type each command and press Enter.
 ```
 mkdir ~/Desktop/mortgage-calc
 cd ~/Desktop/mortgage-calc
-claude
+claude --dangerously-skip-permissions
 ```
 
 Plain-English translation:
 
 - `mkdir ~/Desktop/mortgage-calc` — make a folder called `mortgage-calc` on your Desktop.
 - `cd ~/Desktop/mortgage-calc` — move into the folder.
-- `claude` — start Claude Code here.
+- `claude --dangerously-skip-permissions` — start Claude Code here. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The blinking cursor is now Claude's. You're chatting with it.
 
@@ -90,7 +93,7 @@ Don't write the rules in a text editor. Tell Claude what to write.
 > named below (e.g. "binding: income multiplier" or "binding: debt-to-income").
 > ```
 
-Claude asks permission before writing the file. Say yes. You now have `rules.md` sitting in the folder on your Desktop.
+Claude writes the file straight away. You now have `rules.md` sitting in the folder on your Desktop.
 
 Five minutes of work. Be explicit; ambiguity will produce a buggy calculator.
 
@@ -113,7 +116,7 @@ Still in Claude, say:
 >
 > No frameworks. Plain HTML + CSS + JavaScript in one file.
 
-Press Enter. Claude builds the file in 30–60 seconds, asking permission before it writes `index.html`.
+Press Enter. Claude builds the file in 30–60 seconds and writes `index.html` straight away.
 
 ---
 
@@ -160,3 +163,13 @@ This loop is the actual skill — and it's the same loop a senior developer runs
 Once you're happy, email `index.html` to a colleague — they double-click and it opens in their browser. If you want to share it more broadly, that's where your manager + risk team come in. The prototype earns the conversation.
 
 Half an hour. Six prompts. A working interactive tool that your colleagues can actually use. You didn't write a single line of code.
+
+### Make returning easy with `CLAUDE.md`
+
+You'll come back to this folder. A risk officer will ask "can we add a second-borrower row?" and you'll need Claude to remember the original design intent. Rename `rules.md` to `CLAUDE.md`:
+
+```
+mv rules.md CLAUDE.md
+```
+
+`CLAUDE.md` is the magic filename Claude Code reads automatically every time it starts in this folder. Next time you `cd ~/Desktop/mortgage-calc && claude --dangerously-skip-permissions`, Claude already knows the eligibility rules, the input fields, the NBG-ish styling — you can jump straight to *"add a second-borrower column"* without re-briefing.

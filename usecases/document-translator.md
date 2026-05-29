@@ -15,7 +15,7 @@ difficulty: beginner
 order: 11
 outcome: A markdown file with the original on the left and the translation on the right, plus a "notes" section flagging phrases where Claude is uncertain or where literal translation would mislead.
 inputs:
-  - The document to translate (paste it in or save as a file)
+  - Nothing — Claude will invent a realistic Greek customer complaint email to practise on. (Once you trust the loop, swap in real anonymised correspondence — names, IBANs, account numbers stripped first.)
   - Claude Code installed and a terminal open (see Day 1)
 ---
 
@@ -29,7 +29,7 @@ This use case treats translation as a structured task: original on the left, tar
 
 ## Step 1 — Build the workspace
 
-**Open the Terminal app.** Pick your OS at the top of this page if you haven't already.
+**Open the Terminal app.**
 
 <div data-os="mac">
 
@@ -41,6 +41,9 @@ Press ⌘+Space, type "Terminal", and press Enter.
 
 Open the Start menu (press the Windows key), type "Ubuntu", and press Enter. If you don't see Ubuntu listed, [install WSL first](/start-here/day-1/#d1).
 
+In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-username>/Desktop`) — **not** the Windows desktop you see in File Explorer at `C:\Users\...\Desktop`. That's fine: the files are real and Claude can read and write them. Anywhere this use case says "open in Finder / File Explorer", run `explorer.exe .` from your Ubuntu terminal — Windows opens that exact WSL folder in Explorer.
+
+
 </div>
 
 Type each line:
@@ -48,28 +51,32 @@ Type each line:
 ```
 mkdir ~/Desktop/translate-complaint
 cd ~/Desktop/translate-complaint
-claude
+claude --dangerously-skip-permissions
 ```
 
 - `mkdir ~/Desktop/translate-complaint` — make a folder on your Desktop.
 - `cd ~/Desktop/translate-complaint` — move into it.
-- `claude` — start Claude Code here.
+- `claude --dangerously-skip-permissions` — start Claude Code here. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The cursor is now Claude's.
 
 ---
 
-## Step 2 — Let Claude create the source file
+## Step 2 — Ask Claude to invent a realistic Greek complaint
 
-Tell Claude:
+You don't have a real Greek email to hand and you don't need one. Tell Claude:
 
-> Create a file called `source.md` in this folder. Paste this customer email into it exactly as I send it next, including line breaks.
+> Create a file called `source.md` in this folder. Write a realistic synthetic complaint email in Greek (~180 words) that a long-standing NBG retail customer might send. The complaint: their mortgage statement for May arrived showing a higher monthly payment than agreed, the contact-centre couldn't explain it on the phone, and they're now worried it's a covert rate change.
 >
-> *(Then in the next message, paste the Greek email. Customer name, account numbers, IBANs already stripped per the compliance check.)*
+> Tone in Greek: formal-but-frustrated. Use phrases a real customer would use — including at least two formal Greek constructions that don't translate cleanly to English (the kind of thing where the literal translation loses tone). Use placeholders `[CUSTOMER NAME]` and `[ACCOUNT]` instead of inventing personal data.
+>
+> Sign off with the formal Greek closing convention (Με εκτίμηση,).
+>
+> No real names, no real IBANs.
 
-Claude asks permission before writing. Say yes. The Greek text now lives in `source.md`.
+Claude writes the file straight away. The Greek text now lives in `source.md`.
 
-If the source is a PDF or Word file you already have, you can skip this step — just `mv ~/Downloads/source.pdf .` first and tell Claude to read the PDF directly.
+That's the small surprise: Claude can generate the *input* document, not just process it. When you do this on real customer correspondence, the only thing that changes is what's in `source.md`.
 
 ---
 
@@ -87,7 +94,7 @@ A literal translation is rarely what you want. Tell Claude who reads this, why t
 > Tone needed: formal but warm — must convey the customer's emotional state accurately without sounding sensationalist
 > ```
 
-Claude asks permission. Say yes.
+Claude writes the file straight away.
 
 The "tone needed" line is the one that separates good translation from mechanical translation. Spend a minute on it.
 
@@ -142,3 +149,15 @@ Then paste the markdown into Teams (which renders the table) or copy `translatio
 The pattern works in either direction (English → Greek or Greek → English) and for any document type — contracts, internal memos, technical specifications. The structure (side-by-side, notes, one-line summary) stays. Only `context.md` changes.
 
 Your reputation as the person who "handles the cross-border cases well" is built on getting the *notes* right — not on getting the translation perfect. Most colleagues won't notice a perfect translation; they'll notice when a nuance got flagged that they would otherwise have missed.
+
+### Save your translation rules in `CLAUDE.md`
+
+The three-section structure (side-by-side, translation notes, one-line summary) and your standards for what counts as a *worth-flagging* nuance don't change between documents. Save them as `CLAUDE.md`:
+
+> Create a `CLAUDE.md` in this folder. Put in it my stable translation rules:
+>
+> - Output in three sections in this order: (1) two-column side-by-side table, one row per source paragraph; (2) translation notes — flag literal translations that would mislead, untranslatable idioms/register, words with two plausible English equivalents, and culturally specific phrases (e.g. Greek capitalised `την Τράπεζα` almost personifying the bank); (3) one-paragraph summary in the target language for the reader who reads first and skims the rest
+> - Don't soften emotional language — if the source is angry, the translation reads angry
+> - Notes are where the value is. A translation without flagged trade-offs is suspect
+
+`CLAUDE.md` is the magic filename Claude Code reads automatically when you start `claude` in a folder containing it. Next document: copy this CLAUDE.md into a new folder, drop in the source, write a short per-document `context.md` (target language, reader, purpose, tone), run `claude --dangerously-skip-permissions`. Your structure and standards are already loaded.

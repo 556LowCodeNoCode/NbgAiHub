@@ -15,8 +15,7 @@ difficulty: beginner
 order: 10
 outcome: A markdown checklist with three sections (Day 1 · Days 2–3 · Days 4–5), each item including who to talk to and why it matters. Personalised to the joiner's role and prior experience.
 inputs:
-  - The job description for the role (PDF or pasted text)
-  - The team's existing generic onboarding doc (if it exists; otherwise skip this — Claude works without it)
+  - Nothing — Claude will invent a realistic job description, generic team onboarding doc, and joiner CV for you to practise on. (Once you trust the loop, swap in your real JD + onboarding doc + the joiner's CV — handle the CV as personal data per GDPR.)
   - Claude Code installed and a terminal open (see Day 1)
 ---
 
@@ -30,7 +29,7 @@ This use case is a small fix with disproportionate impact: a checklist that look
 
 ## Step 1 — Build the workspace
 
-**Open the Terminal app.** Pick your OS at the top of this page if you haven't already.
+**Open the Terminal app.**
 
 <div data-os="mac">
 
@@ -42,6 +41,9 @@ Press ⌘+Space, type "Terminal", and press Enter.
 
 Open the Start menu (press the Windows key), type "Ubuntu", and press Enter. If you don't see Ubuntu listed, [install WSL first](/start-here/day-1/#d1).
 
+In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-username>/Desktop`) — **not** the Windows desktop you see in File Explorer at `C:\Users\...\Desktop`. That's fine: the files are real and Claude can read and write them. Anywhere this use case says "open in Finder / File Explorer", run `explorer.exe .` from your Ubuntu terminal — Windows opens that exact WSL folder in Explorer.
+
+
 </div>
 
 Type each line:
@@ -49,30 +51,36 @@ Type each line:
 ```
 mkdir ~/Desktop/onboarding-anna
 cd ~/Desktop/onboarding-anna
+claude --dangerously-skip-permissions
 ```
 
 - `mkdir ~/Desktop/onboarding-anna` — make a folder named after the joiner.
 - `cd ~/Desktop/onboarding-anna` — move into it.
-
-Move the three input files into this folder. From Downloads:
-
-```
-mv ~/Downloads/job-description.pdf .
-mv ~/Downloads/team-onboarding.pdf .
-mv ~/Downloads/anna-cv.pdf .
-```
-
-The `.` means "the current folder". Swap the filenames for the ones you actually have. If you don't have a team onboarding doc, skip that line.
-
-Then start Claude:
-
-```
-claude
-```
+- `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 ---
 
-## Step 2 — Let Claude create the context file
+## Step 2 — Ask Claude to invent the three input documents
+
+You don't have a real JD, team onboarding doc, or CV to hand — and you don't need them. Tell Claude:
+
+> Create three files in this folder:
+>
+> **File 1: `job-description.md`** — a realistic JD (~1 page) for "SME Credit Analyst" at NBG retail bank, Athens HQ. Include: responsibilities (credit underwriting for SME loans up to €500k, portfolio monitoring, contributing to risk committee submissions), required skills (2+ years credit analysis, comfortable with financial-statement analysis, knowledge of Greek SME sector, Greek + English fluency), reporting line (Head of SME Credit), what success looks like at 6 / 12 months.
+>
+> **File 2: `team-onboarding.md`** — a deliberately generic 40-item bank-wide onboarding checklist (~2 pages of markdown) that HR sends every new joiner. Mix relevant items (laptop pickup, badge, mandatory KYC training, data-protection module, code-of-conduct sign-off, SAP-CRM access request, intranet account, internal phone number) with items that only apply to specific roles (cash-handling training, branch-front-line uniform fitting, ATM-vault access request, trade-desk system permissions, customer-call-recording authorisation). Order them haphazardly — that's how real generic checklists look.
+>
+> **File 3: `anna-cv.md`** — a realistic CV for "Anna Papas" (~1 page). Background: 2 years as a junior credit analyst at a competitor Greek bank; before that an Athens University economics degree (2:1 equivalent); strong on financial-statement analysis and Excel; some SQL exposure from a fintech internship; KYC-certified at her current bank; native Greek, C1 English. Add a "Personal" line: lives in Kifissia, 27 years old, joined cycling club.
+>
+> Make all three feel like real corporate documents — not bulletted summaries. The team-onboarding one in particular should have a 1990s-HR-document tone: long sentences, "the colleague shall", lots of capitalisation.
+
+Claude writes all three files straight away.
+
+Two minutes of synthesis from Claude that would have taken you twenty to write by hand — and the files now feel realistic enough to do the actual exercise on.
+
+---
+
+## Step 3 — Let Claude create the context file
 
 The checklist quality is set by the context you give Claude. The more specific the context, the more useful the checklist.
 
@@ -89,17 +97,17 @@ Tell Claude:
 > Banking experience: 2 years junior analyst at a competitor — knows the basics, new to NBG-specific systems and policies
 > ```
 
-Claude asks permission before writing. Say yes.
+Claude writes the file straight away.
 
 Two minutes of thought here is what separates "useful checklist" from "another bureaucratic document".
 
 ---
 
-## Step 3 — Ask for the personalised checklist
+## Step 4 — Ask for the personalised checklist
 
 Send this to Claude:
 
-> Read `context.md`, `job-description.pdf`, `team-onboarding.pdf`, and `anna-cv.pdf`.
+> Read `context.md`, `job-description.md`, `team-onboarding.md`, and `anna-cv.md`.
 >
 > Produce `week-one-checklist.md` with these three sections, in this order:
 >
@@ -111,7 +119,7 @@ Send this to Claude:
 >
 > Hard rules:
 >
-> - **Skip** items from `team-onboarding.pdf` that don't apply to a credit analyst (e.g. front-line cash-handling training).
+> - **Skip** items from `team-onboarding.md` that don't apply to a credit analyst (e.g. front-line cash-handling training).
 > - **Skip** anything Anna already knows from her CV (don't put "Introduction to credit risk fundamentals" on the list if she has 2 years of credit analysis behind her).
 > - **Add** an introduction to one specific NBG policy or system that her prior bank wouldn't have used.
 > - Every item needs a *why*. "Mandatory KYC training (Day 2)" is incomplete; "Mandatory KYC training (Day 2) — required by Bank of Greece for anyone handling client files, takes 90 minutes" is the right shape.
@@ -120,7 +128,7 @@ Press Enter. Claude reads the files and writes the checklist in 30–90 seconds.
 
 ---
 
-## Step 4 — Sanity-check before sending
+## Step 5 — Sanity-check before sending
 
 Ask Claude:
 
@@ -136,7 +144,7 @@ Iterate. Three of these revisions usually produce a checklist that lands well.
 
 ---
 
-## Step 5 — Send it the right way
+## Step 6 — Send it the right way
 
 Don't email it on Friday afternoon as an attachment. Two better options:
 
@@ -146,3 +154,19 @@ Don't email it on Friday afternoon as an attachment. Two better options:
 Save the folder. The next joiner's checklist reuses the prompt and the team onboarding doc — only `context.md` and the CV change. Twenty minutes becomes five.
 
 The deeper win: the joiner spends their first week *doing* instead of waiting for someone to tell them what they should be doing. That's worth a lot more than the time you saved.
+
+### Make the next joiner's checklist faster with `CLAUDE.md`
+
+The rules you established this time are stable — they apply to *every* SME Credit joiner. The joiner's name and CV change; the rules don't. Tell Claude:
+
+> Create a `CLAUDE.md` in this folder. Put in it the stable rules for week-one checklists in the SME Credit team:
+>
+> - Three sections: Day 1 (max 4 items), Days 2–3 (max 5 items), Days 4–5 (max 4 items)
+> - Each item: who they see, where (room or Teams), why it matters in one sentence
+> - **Skip** items from the bank-wide onboarding doc that don't apply to a credit analyst (cash handling, branch uniform, ATM-vault access, customer-call-recording authorisation, trade-desk modules)
+> - **Skip** anything redundant with the joiner's prior experience (don't put "Introduction to credit risk fundamentals" on the list for someone who already has 2 years of it)
+> - **Add** at least one NBG-specific intro (e.g. the RatingPro scoring model) that a competitor bank wouldn't have used
+> - Day-4/5 task must be small, finishable, and pair the joiner with a buddy
+> - Every item needs a *why*
+
+`CLAUDE.md` is the magic filename Claude Code reads automatically every time you start `claude` in a folder containing it. Next joiner: copy the CLAUDE.md and the team-onboarding doc into a new folder, drop in the new joiner's CV, write a one-line `context.md` with name and prior experience, run `claude --dangerously-skip-permissions`. Five minutes.

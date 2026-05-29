@@ -15,7 +15,7 @@ difficulty: beginner
 order: 12
 outcome: A markdown runbook with numbered steps, named tools at each step, decision points called out explicitly, and a "common errors" section — ready to be reviewed by the original colleague and put in the team SharePoint.
 inputs:
-  - A Teams recording / transcript of a 30–45 minute interview with the colleague who runs the process
+  - Nothing — Claude will invent a realistic 30-minute interview transcript for you to practise on. (Once you trust the loop, run a real Teams interview, download the transcript, and substitute it.)
   - Claude Code installed and a terminal open (see Day 1)
 ---
 
@@ -27,24 +27,17 @@ This use case is the workaround: don't ask them to write it down. Ask them to *d
 
 ---
 
-## Step 1 — Run the interview as a screen-share + narrate
+## Step 1 — Understand the real-world setup (then we'll simulate it)
 
-Schedule 30–45 minutes with the colleague. On the Teams call:
+In real life this use case starts with a 30–45 minute Teams call where the colleague who owns the process shares their screen, runs the process end-to-end while narrating, and you interrupt only with clarifying questions ("what do you do if it IS zero?", "why this filter and not that one?", "what does 'usually' mean — every time, or sometimes?"). Teams records, and you download the transcript.
 
-1. **They share their screen.** They open the systems they actually use.
-2. **They run the process end-to-end while talking.** *"OK so the first thing I do is open the GL report from yesterday. I go to this menu, then this filter. I always check this number first because if it's zero it usually means the overnight job failed…"*
-3. **You interrupt only with clarifying questions.** *"What do you do if it IS zero?"*, *"Why this filter and not that one?"*, *"What does 'usually' mean here — every time, or sometimes?"*
-4. **Teams records the call and generates a transcript.** Make sure recording is on at the start.
-
-After the call, in the Teams meeting chat: three-dot menu → "Download transcript" → save as `.docx` or `.vtt`. It lands in your Downloads folder.
-
-This step is the load-bearing part of the use case. The runbook quality is set by how well you interviewed. Don't skip the clarifying questions.
+For this walkthrough we'll skip the call entirely — Claude will invent a realistic transcript so you can practise the *runbook-from-transcript* loop, which is where the actual leverage is. When you do this for real, the interview is the load-bearing part — don't skip the clarifying questions.
 
 ---
 
-## Step 2 — Build the workspace and move the transcript in
+## Step 2 — Build the workspace
 
-**Open the Terminal app.** Pick your OS at the top of this page if you haven't already.
+**Open the Terminal app.**
 
 <div data-os="mac">
 
@@ -56,6 +49,9 @@ Press ⌘+Space, type "Terminal", and press Enter.
 
 Open the Start menu (press the Windows key), type "Ubuntu", and press Enter. If you don't see Ubuntu listed, [install WSL first](/start-here/day-1/#d1).
 
+In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-username>/Desktop`) — **not** the Windows desktop you see in File Explorer at `C:\Users\...\Desktop`. That's fine: the files are real and Claude can read and write them. Anywhere this use case says "open in Finder / File Explorer", run `explorer.exe .` from your Ubuntu terminal — Windows opens that exact WSL folder in Explorer.
+
+
 </div>
 
 Type each line:
@@ -63,18 +59,40 @@ Type each line:
 ```
 mkdir ~/Desktop/runbook-monthend-recon
 cd ~/Desktop/runbook-monthend-recon
-mv ~/Downloads/transcript.docx .
-claude
+claude --dangerously-skip-permissions
 ```
 
 - `mkdir ~/Desktop/runbook-monthend-recon` — make a folder named after the process.
 - `cd ~/Desktop/runbook-monthend-recon` — move into it.
-- `mv ~/Downloads/transcript.docx .` — move the transcript file out of Downloads.
-- `claude` — start Claude Code.
+- `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 ---
 
-## Step 3 — Let Claude create the context file
+## Step 3 — Ask Claude to invent the interview transcript
+
+Tell Claude:
+
+> Create a file called `transcript.md` in this folder. Generate a realistic Teams-style interview transcript (~100 lines) for a 30-minute call between **A. Petrou** (you, asking questions) and **M. Vassilas** (the colleague who runs the month-end GL reconciliation for the SME lending portfolio).
+>
+> Format: speaker label on each line (`M. Vassilas: …`). Mix of substance and mess:
+>
+> - Greeting + screen-share setup ("can you see my screen?", "let me share").
+> - M. Vassilas walks through the process step by step: opens SAP-FI tx FB03, runs a specific report, downloads the output, opens the internal "ReconView" Excel macro, pastes the data in, hits Refresh, compares totals against the Power BI dashboard.
+> - At least 4 "I usually" or "I tend to" moments — undocumented judgement calls. Examples: "I usually wait until 7am because the overnight job is sometimes late", "I tend to pull a 3-month rolling view to compare", "if the difference is under €1,000 I just note it; if it's bigger I escalate to M. Costa".
+> - At least 2 specific error states M. Vassilas mentions ("if you see error E-204 it means the GL post hasn't completed; just wait 10 minutes"; "if ReconView shows zero rows, the macro lost the connection — restart Excel and retry").
+> - At least one vague moment where M. Vassilas waves their hand and says something like "and then you just check the thing and it's usually fine" — A. Petrou should ask "what thing?" and M. Vassilas should give a slightly clearer but still incomplete answer.
+> - At the end: who gets the output (the regional CFO's office), how (PDF emailed to a shared mailbox), by when (10am the next business day).
+> - Realistic filler ("yeah", "um", "let me just"), one tangent about coffee, one moment where the screen freezes.
+>
+> Don't sanitise — the messiness is the point. The whole exercise is Claude turning a messy transcript into a clean runbook.
+
+Claude writes the file straight away.
+
+That's the trick: Claude can invent the *input* document, not just process it. When you do this for real, the only thing that changes is the contents of `transcript.md`.
+
+---
+
+## Step 4 — Let Claude create the context file
 
 Tell Claude:
 
@@ -88,17 +106,17 @@ Tell Claude:
 > Reader level: someone who knows banking ops but has never run THIS process before
 > ```
 
-Claude asks permission. Say yes.
+Claude writes the file straight away.
 
 The "reader level" line matters. A runbook written *"as if for a complete beginner"* is patronising and unreadable; one *"as if for a peer"* skips steps. Pick the level honestly.
 
 ---
 
-## Step 4 — Ask Claude for the runbook
+## Step 5 — Ask Claude for the runbook
 
 Send this to Claude:
 
-> Read `transcript.docx` and `context.md`.
+> Read `transcript.md` and `context.md`.
 >
 > Produce `runbook.md` with this structure:
 >
@@ -127,7 +145,7 @@ Press Enter. A 30-minute interview transcript takes 60–120 seconds to process.
 
 ---
 
-## Step 5 — Have the colleague review the runbook
+## Step 6 — Have the colleague review the runbook
 
 This is the most important step. Send the colleague:
 
@@ -149,3 +167,17 @@ Claude edits `runbook.md`. One more pass with the colleague — usually only one
 Save it to the team SharePoint or wiki. The next time the colleague is on holiday, someone else runs the process from the runbook. The first time that happens, you'll know whether the runbook is actually good. (It will need one more revision after that first real-world use. That's normal.)
 
 The deeper win: you've now done one process. The pattern works for every other single-person-of-failure process in the team. Once the team sees one runbook land, the second one gets easier to schedule.
+
+### Build a runbook-generation `CLAUDE.md` for the next process
+
+The *runbook structure* you used today — Overview → Prerequisites → Steps with done-conditions → Common errors → Deliverable — is the same for every team process. The *transcript* changes. Save the structure as `CLAUDE.md`:
+
+> Create a `CLAUDE.md` in `~/Desktop/runbooks/`. Put in it my stable rules for runbook generation from interview transcripts:
+>
+> - Five sections: One-paragraph overview, Prerequisites bullets, numbered Steps (each step = action verb + tool + "done when" + decision sub-bullets), Common errors table (`What you see | What it means | What to do`), final "Deliverable / recipient / deadline" block
+> - Skip every "um", "yeah", "let me just" — runbook reads like a careful person wrote it
+> - "I usually" / "I tend to" in the transcript = undocumented decision point. Promote to an explicit `Decision: if X then Y, else Z`. Note what the original runner chooses most often
+> - Anything vague ("you check the thing, then it's fine") gets `[NEEDS VERIFICATION — author was vague]` rather than a guess
+> - Errors table uses ONLY errors the transcript mentioned — don't invent
+
+`CLAUDE.md` is the magic filename Claude Code reads automatically when you start `claude` in a folder containing it. Next single-person-of-failure process: new folder, copy `CLAUDE.md` over, drop in the new interview transcript, run `claude --dangerously-skip-permissions`, and say *"produce the runbook"*. The format is already loaded.

@@ -8,14 +8,14 @@ authored: "2026-05-28"
 last_reviewed: "2026-05-28"
 external_link: null
 deeper_link: null
-ai_summary: You drop a CSV of contact-center complaints into a folder on your Desktop. Forty-five minutes later you have a one-page markdown report showing the top five themes, how often each appears, and one verbatim quote per theme. Repeatable every Monday.
+ai_summary: You ask Claude to invent a realistic complaints CSV (so the use case works without any system access), then a few minutes later you have a one-page markdown report showing the top five themes, how often each appears, and one verbatim quote per theme. Repeatable every Monday on real data once you have it.
 business_unit: contact-center
 time_estimate: "~25 min"
 difficulty: beginner
 order: 1
 outcome: A one-page markdown report — top 5 complaint themes, counts, and one verbatim quote per theme — ready to paste into Teams or email.
 inputs:
-  - A CSV or Excel file of complaints with a free-text column (export it from the system that holds them)
+  - Nothing — Claude will create a realistic synthetic complaints CSV for you. (Once you trust the loop you can swap in a real export from your contact-centre system.)
   - Claude Code installed and a terminal open (see Day 1)
 ---
 
@@ -23,30 +23,15 @@ The contact centre collects thousands of complaints a month. Nobody reads them a
 
 This use case is the two-hour version compressed to twenty-five minutes — and it gets faster every time you run it because the prompt becomes a template you reuse.
 
-> **Compliance check before you start.** Use a *synthetic* or *fully anonymised* extract for your first run. No customer names, no IBANs, no phone numbers in the file. Once you've done it once on safe data you'll know exactly what the prompt asks Claude to do — that's the right moment to talk to your line manager about which real data sources are cleared.
+> **Compliance check before you start.** This walkthrough never touches real customer data — you'll have Claude invent a synthetic CSV. Once you trust the loop you can talk to your line manager about which real data sources are cleared and swap in a real export. The prompt that does the work stays identical.
 
 ---
 
-## Step 1 — Get the complaints out of the source system
+## Step 1 — Build your workspace on the Desktop
 
-Open the system that holds the complaints (Genesys, a CRM, a SharePoint list, whatever) and export the last week's complaints as a CSV. Aim for 200–500 rows for your first run. A small file makes the loop fast.
+You're going to make a folder on your Desktop and start Claude Code there. Three commands.
 
-Keep two columns at minimum:
-
-- `date` — when the complaint came in
-- `text` — what the customer actually said
-
-If you have categories already attached, that's fine — leave them in. Claude can tell you whether those existing categories match the themes it finds.
-
-The file will land in your **Downloads** folder by default. Leave it there for now — we'll move it in Step 2.
-
----
-
-## Step 2 — Build your workspace on the Desktop
-
-You're going to make a folder on your Desktop, move the CSV into it, and start Claude Code there. Three commands.
-
-**Open the Terminal app first.** Pick your OS at the top of this page if you haven't already — the boxes below switch to match.
+**Open the Terminal app.**
 
 <div data-os="mac">
 
@@ -58,6 +43,9 @@ Press ⌘+Space, type "Terminal", and press Enter. (Or open Finder → Applicati
 
 Open the Start menu (press the Windows key), type "Ubuntu", and press Enter. If you don't see Ubuntu listed, [install WSL first](/start-here/day-1/#d1) — it's a 10-minute one-time setup.
 
+In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-username>/Desktop`) — **not** the Windows desktop you see in File Explorer at `C:\Users\...\Desktop`. That's fine: the files are real and Claude can read and write them. Anywhere this use case says "open in Finder / File Explorer", run `explorer.exe .` from your Ubuntu terminal — Windows opens that exact WSL folder in Explorer.
+
+
 </div>
 
 You'll see a prompt — the blinking cursor is waiting for you. Type each line below and press Enter after each one.
@@ -65,22 +53,35 @@ You'll see a prompt — the blinking cursor is waiting for you. Type each line b
 ```
 mkdir ~/Desktop/complaint-heatmap
 cd ~/Desktop/complaint-heatmap
-mv ~/Downloads/complaints.csv .
+claude --dangerously-skip-permissions
 ```
 
-Plain-English translation, line by line:
+Plain-English translation:
 
 - `mkdir ~/Desktop/complaint-heatmap` — **m**a**k**e a new **dir**ectory (folder) called `complaint-heatmap` on your Desktop. You'll see it appear in Finder / File Explorer.
 - `cd ~/Desktop/complaint-heatmap` — **c**hange **d**irectory: move the terminal *into* that folder, so any command you type next runs there.
-- `mv ~/Downloads/complaints.csv .` — **m**o**v**e the CSV from your Downloads folder into the current folder (the `.` means "here"). If your exported file is called something else, swap `complaints.csv` for the actual name.
+- `claude --dangerously-skip-permissions` — start Claude Code in this folder. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one where there's nothing it can damage. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
-Now start Claude Code in this folder:
+The blinking cursor is now Claude's. You're chatting with it.
 
-```
-claude
-```
+---
 
-You'll see Claude's prompt take over the terminal. Claude can now read every file in this folder — including the CSV you just moved in.
+## Step 2 — Ask Claude to invent a realistic complaints CSV
+
+You don't have a real export, and you don't need one. Tell Claude:
+
+> Create a file called `complaints.csv` in this folder. Generate 40 realistic synthetic complaints a Greek retail-bank contact centre might receive in a week. Columns: `date,channel,text`.
+>
+> - Dates between `2026-05-19` and `2026-05-25`.
+> - `channel` is one of `phone`, `email`, `chat`.
+> - The `text` column should be the customer's verbatim message — anywhere from 8 to 60 words. Mix tone: some calm, some annoyed, some confused.
+> - Cluster the complaints around realistic recurring themes: duplicate card charges, mobile app login failures, ATM cash-out errors, mortgage statement queries, branch wait times, SMS-OTP delays. Make some themes more common than others (life is uneven). Don't make every row a different theme — that's not what real complaint data looks like.
+> - **No** real names, IBANs, or phone numbers. Use placeholders like "the customer", "my card", "the app".
+> - Quote-escape any commas inside the `text` field with double quotes so the CSV parses cleanly.
+
+Claude writes the file straight away (because of the `--dangerously-skip-permissions` flag from Step 1). You'll see `complaints.csv` appear in the folder on your Desktop.
+
+This is the part that surprises people: Claude can generate *input* data, not just process it. Once you trust the loop on this synthetic file you can replace it with a real export — the rest of the use case doesn't change.
 
 ---
 
@@ -119,19 +120,38 @@ This review *is* the work. Five minutes here saves you from sending a wrong-look
 
 ---
 
-## Step 5 — Save the prompt as your Monday template
+## Step 5 — Make the rules stick with `CLAUDE.md`
 
-Once you're happy, tell Claude:
+`CLAUDE.md` is the most useful file in Claude Code. Whenever you start `claude` inside a folder that contains a file called `CLAUDE.md`, Claude reads it automatically — no need to mention it in your prompt. It's where the *stable rules* of your workflow live, so next week's run is a one-liner instead of a re-typed brief.
 
-> Create a file called `prompt.md` in this folder and put the exact prompt you just used inside it — including any tweaks I asked for. Add a one-line comment at the top so I remember it's the Monday-heatmap template.
+Tell Claude:
 
-Claude writes the file. Now next Monday's workflow is:
+> Create a file called `CLAUDE.md` in this folder. Put in it the stable rules for the heatmap workflow, in your own words, so that next week when I start Claude here it already knows:
+>
+> - The input file will be called `complaints.csv` with `date,channel,text` columns
+> - I want a markdown one-pager with: a headline count, 5–7 themes sorted by count, one verbatim quote per theme, and a one-sentence fix per theme
+> - Quotes must be **exact strings** copied from the `text` column — no paraphrasing
+> - Output goes to `heatmap-report.md`
+>
+> Also add a one-line note at the top reminding me this is the Monday-heatmap template.
 
-1. Export a fresh CSV from the source system.
-2. Make a new dated folder: `mkdir ~/Desktop/heatmap-2026-06-04 && cd ~/Desktop/heatmap-2026-06-04`
-3. Copy your template over: `cp ~/Desktop/complaint-heatmap/prompt.md .` and move the new CSV in.
-4. Start Claude: `claude` — then say *"use prompt.md on complaints.csv"*.
+Claude writes the file. Next Monday's workflow shrinks to:
 
-Five minutes. The heatmap is on your screen before your coffee cools.
+1. Drop a fresh `complaints.csv` into a new folder.
+2. `cp ~/Desktop/complaint-heatmap/CLAUDE.md ~/Desktop/heatmap-2026-06-04/` — the rules travel with you.
+3. `cd` into the new folder and run `claude --dangerously-skip-permissions`.
+4. Type one line: *"do the heatmap"*. Claude knows the rest because it already read `CLAUDE.md`.
 
-You've just turned a recurring two-hour task into a five-minute one — and the report is more consistent than the version you used to write by hand, because the rules live in the prompt.
+You've turned a recurring two-hour task into a five-minute one, and the rules now live in a file you can edit instead of a prompt you have to re-type.
+
+### Bonus — `~/.claude/CLAUDE.md` for rules that apply *everywhere*
+
+The same trick works at the global level. Anything you want Claude to remember across **every** project on your machine — your team's tone, mandatory redaction rules, your preferred output format — goes in `~/.claude/CLAUDE.md`. Claude reads that file at the start of every session, anywhere on your laptop.
+
+A short, sane starting `~/.claude/CLAUDE.md` for a banking colleague might be:
+
+> - I work at NBG (retail bank, Greece). Default to UK English and a plainspoken tone — no marketing voice.
+> - For any file containing customer data, treat IBANs, account numbers, and personal names as **already redacted** unless I explicitly say otherwise.
+> - When you're unsure about a regulatory interpretation, write "needs legal interpretation" instead of guessing.
+
+Two minutes of work, useful in every future session. Don't bloat it — one or two lines per rule is plenty.

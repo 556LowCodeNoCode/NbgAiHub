@@ -29,7 +29,7 @@ This use case is that twenty minutes — and the query you save at the end is re
 
 ## Step 1 — Build the workspace
 
-**Open the Terminal app.** Pick your OS at the top of this page if you haven't already.
+**Open the Terminal app.**
 
 <div data-os="mac">
 
@@ -41,6 +41,9 @@ Press ⌘+Space, type "Terminal", and press Enter.
 
 Open the Start menu (press the Windows key), type "Ubuntu", and press Enter. If you don't see Ubuntu listed, [install WSL first](/start-here/day-1/#d1).
 
+In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-username>/Desktop`) — **not** the Windows desktop you see in File Explorer at `C:\Users\...\Desktop`. That's fine: the files are real and Claude can read and write them. Anywhere this use case says "open in Finder / File Explorer", run `explorer.exe .` from your Ubuntu terminal — Windows opens that exact WSL folder in Explorer.
+
+
 </div>
 
 Type each line:
@@ -48,12 +51,12 @@ Type each line:
 ```
 mkdir ~/Desktop/sql-cards-under25
 cd ~/Desktop/sql-cards-under25
-claude
+claude --dangerously-skip-permissions
 ```
 
 - `mkdir ~/Desktop/sql-cards-under25` — make a folder named after the question.
 - `cd ~/Desktop/sql-cards-under25` — move into it.
-- `claude` — start Claude Code.
+- `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The cursor is now Claude's.
 
@@ -92,7 +95,7 @@ Tell Claude:
 >   region (text: "Attica" | "Macedonia" | …)
 > ```
 
-Claude asks permission before writing. Say yes.
+Claude writes the file straight away.
 
 The first time you do this it takes ten minutes because you're typing the schema out. Worth it — once `schema.md` exists, every future question against the same tables reuses it. Update it once when the warehouse changes.
 
@@ -157,3 +160,22 @@ Claude reasons over the SQL, suggests the fix, edits `query.sql`. You run it aga
 Once the result is solid, the folder `~/Desktop/sql-cards-under25/` is now your reusable template: schema + query + a comment explaining the question. Next quarter you copy the folder, change the dates in one line, rerun. Three minutes.
 
 The deeper win: you've now done one full data-analyst's loop without being a data analyst. The next question against the same schema takes half the time.
+
+### Make every future SQL question faster with `CLAUDE.md`
+
+The schema doesn't change. The same `cards`, `customers`, `branches` tables exist next week, next quarter, next year. Don't keep retyping that to Claude. Rename:
+
+```
+mv schema.md CLAUDE.md
+```
+
+`CLAUDE.md` is the magic filename Claude Code reads automatically every time you start `claude` in a folder containing it. Even better: make a dedicated folder for *all* your warehouse questions:
+
+```
+mkdir ~/Desktop/warehouse-queries
+mv ~/Desktop/sql-cards-under25/CLAUDE.md ~/Desktop/warehouse-queries/
+cd ~/Desktop/warehouse-queries
+claude --dangerously-skip-permissions
+```
+
+Now every business question lives in the same folder. Claude already knows the schema. Your next question is just *"how many credit cards were issued to customers over 65 in 2025, by region?"* and Claude writes the SQL. After a month you'll have a personal library of warehouse queries — and your data team will start asking *you* questions.

@@ -15,7 +15,7 @@ difficulty: beginner
 order: 5
 outcome: A markdown file `minutes-YYYY-MM-DD.md` with decisions, action items (owner + deadline), and a short narrative summary — ready to send to the meeting attendees.
 inputs:
-  - The Teams (or Zoom, Webex, Google Meet) transcript file
+  - Nothing — Claude will invent a realistic Teams-style transcript for you to practise on. (Once you trust the loop, swap in a real Teams transcript download — `.docx` or `.vtt`.)
   - Claude Code installed and a terminal open (see Day 1)
 ---
 
@@ -27,19 +27,9 @@ This use case extracts the meeting from the transcript in the time it takes to m
 
 ---
 
-## Step 1 — Download the transcript
+## Step 1 — Build the workspace
 
-In Teams: open the meeting in the chat tab → click the three-dot menu next to the recording → "Download transcript" → save it. Teams gives you either a `.vtt` or `.docx` file. Both work.
-
-The file lands in your **Downloads** folder by default. Leave it there for now.
-
----
-
-## Step 2 — Build the workspace and move the transcript in
-
-You'll make a fresh folder on your Desktop, move the transcript into it, and start Claude there.
-
-**Open the Terminal app.** Pick your OS at the top of this page if you haven't already.
+**Open the Terminal app.**
 
 <div data-os="mac">
 
@@ -51,6 +41,9 @@ Press ⌘+Space, type "Terminal", and press Enter.
 
 Open the Start menu (press the Windows key), type "Ubuntu", and press Enter. If you don't see Ubuntu listed, [install WSL first](/start-here/day-1/#d1).
 
+In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-username>/Desktop`) — **not** the Windows desktop you see in File Explorer at `C:\Users\...\Desktop`. That's fine: the files are real and Claude can read and write them. Anywhere this use case says "open in Finder / File Explorer", run `explorer.exe .` from your Ubuntu terminal — Windows opens that exact WSL folder in Explorer.
+
+
 </div>
 
 Type each command, press Enter after each:
@@ -58,16 +51,40 @@ Type each command, press Enter after each:
 ```
 mkdir ~/Desktop/minutes-arch-review
 cd ~/Desktop/minutes-arch-review
-mv ~/Downloads/transcript.docx .
-claude
+claude --dangerously-skip-permissions
 ```
 
 Plain-English translation:
 
 - `mkdir ~/Desktop/minutes-arch-review` — make a folder for this meeting. Replace `arch-review` with whatever names this meeting.
 - `cd ~/Desktop/minutes-arch-review` — move into it.
-- `mv ~/Downloads/transcript.docx .` — move the transcript file out of Downloads into the current folder. The `.` means "here". Swap `transcript.docx` for the actual filename Teams gave you.
-- `claude` — start Claude Code. From now on you're chatting with it.
+- `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.) From now on you're chatting with it.
+
+---
+
+## Step 2 — Ask Claude to invent a realistic transcript
+
+You don't have a Teams transcript to hand and you don't need one. Tell Claude:
+
+> Create a file called `transcript.md` in this folder. Generate a realistic 30-minute Teams transcript for a meeting called "Architecture review — payments team" at NBG on 2026-05-28.
+>
+> Attendees: A. Papas (chair), M. Costa, N. Demetriou, J. Vassilas.
+>
+> Format: speaker label on each line, like `A. Papas: …`. Mix of:
+>
+> - Greeting and roll-call at the start.
+> - Some procedural noise: "can you see my screen?", "you're on mute", a 30-second tangent about parking.
+> - Real substance: two payment-routing options (option A: SEPA-Instant via existing rails; option B: a new third-party processor). The team debates cost vs latency vs vendor risk.
+> - A clear decision: pick option A for Q3, with a fallback evaluation of B in Q4.
+> - Three action items: (1) M. Costa drafts a one-pager on the SEPA-Instant volume estimates by 2026-06-03; (2) N. Demetriou contacts the option-B vendor for pricing — no deadline stated; (3) J. Vassilas books a follow-up review for 2026-06-15.
+> - Realistic filler ("yeah, so", "I mean, kind of", "um", "let me just share my screen").
+> - One unresolved disagreement on whether the option-B vendor's SLA is actually credible.
+>
+> Make it ~80 lines long. Don't sanitise — leave the messiness in. The whole point of this exercise is that Claude turns messy dialogue into clean minutes.
+
+Claude writes the file straight away. You now have a transcript that looks and feels like what Teams would give you.
+
+The take-away you've just earned: Claude can generate the *inputs* to a workflow, not just process them. When you do this for real next week the only thing that changes is the transcript file — the rest of the use case doesn't.
 
 ---
 
@@ -87,7 +104,7 @@ Tell Claude:
 > Style of minutes: action-led — decisions and next steps, not a play-by-play
 > ```
 
-Claude asks permission before writing the file. Say yes. Three minutes of work — and it saves you ten minutes of correcting the minutes after the fact.
+Claude writes the file straight away. Three minutes of work — and it saves you ten minutes of correcting the minutes after the fact.
 
 ---
 
@@ -95,7 +112,7 @@ Claude asks permission before writing the file. Say yes. Three minutes of work �
 
 Send this to Claude:
 
-> Read `transcript.docx` and `context.md`.
+> Read `transcript.md` and `context.md`.
 >
 > Produce `minutes-2026-05-28.md` with these sections, in this order:
 >
@@ -130,3 +147,17 @@ Tighten one or two and the minutes are ready.
 Paste the markdown into Teams (which renders it natively), or copy into Outlook (paste as plain text, then bold the section headers manually). Send to attendees.
 
 Save the folder. The pattern is now repeatable: every meeting gets its own dated folder with `transcript` + `context.md` + the minutes. After a quarter you have a searchable archive of what was decided where — which is more than most teams have ever had.
+
+### Make next week's minutes a one-liner with `CLAUDE.md`
+
+`context.md` mixes two kinds of information. The meeting date, attendees, and goal change every week — those stay per-meeting. But the **style** ("action-led, decisions and next steps, not a play-by-play") doesn't change. Put the stable bits in a `CLAUDE.md` file in this folder:
+
+> Create a `CLAUDE.md` here. Put in it: I want minutes in this exact structure — one-paragraph summary, then Decisions bulleted by significance, then an Action items table (`What | Owner | Deadline | Notes`, owner must be a named attendee, never invent a deadline — TBD if not stated), then short Discussion notes for unresolved disagreements. Skip filler, side-chats, screen-share interruptions. The minutes read like a careful person's real-time notes, not a transcript.
+
+Claude reads `CLAUDE.md` automatically every time you start `claude` in a folder containing it. Next week's loop:
+
+1. New dated folder, drop in this week's transcript
+2. `cp ~/Desktop/minutes-arch-review/CLAUDE.md .` — your style rules travel with you
+3. `claude --dangerously-skip-permissions` and one line: *"transcript.md is Tuesday's payments standup, attendees A. Papas, M. Costa, J. Vassilas — produce minutes-2026-06-04.md"*
+
+Claude already knows the format from `CLAUDE.md`. You only describe what's new about this meeting.

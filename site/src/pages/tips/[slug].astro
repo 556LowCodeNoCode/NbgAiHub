@@ -1,0 +1,393 @@
+---
+/**
+ * /tips/[slug] — single-tip detail page.
+ *
+ * 2026-05-29: tip bodies were previously invisible on the site — the listing
+ * (`/tips`) renders only `ai_summary`, and there was no detail route. This
+ * page closes the loop so the tip body (the load-bearing content) actually
+ * surfaces to readers. Slim by design: hero (crumb + title + lede + audience
+ * badge), single-column prose, "back to tips" / "next tip" footer.
+ *
+ * Wires the project remark-glossary-link plugin via createMarkdownProcessor
+ * because Astro's content-collection `render()` bypasses
+ * `markdown.remarkPlugins` (per §S.14 — fourth page that needs explicit
+ * wiring, joins glossary/foundations/day-1).
+ *
+ * Cascade hardening: every layout/spacing/typography rule that must beat
+ * Starlight's unlayered cascade carries `!important` per the
+ * feedback_starlight_unlayered memory.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, getEntry } from 'astro:content';
+import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+import MarketingShell from '../../components/MarketingShell.astro';
+import remarkGlossaryLink from '../../plugins/remark-glossary-link.ts';
+import { linkGlossaryTerms } from '../../lib/glossary-link-string';
+
+export const getStaticPaths = (async () => {
+  const items = await getCollection('tips');
+  return items.map((t) => ({ params: { slug: t.id } }));
+}) satisfies GetStaticPaths;
+
+const { slug } = Astro.params;
+if (!slug) {
+  throw new Error('tips detail page invoked without a slug param');
+}
+
+const entry = await getEntry('tips', slug);
+if (!entry) {
+  throw new Error(`No tips entry found for slug '${slug}'`);
+}
+
+const rawBody: string | undefined = entry.body;
+if (typeof rawBody !== 'string' || rawBody.trim().length === 0) {
+  throw new Error(`tips/${slug}.md has an empty body`);
+}
+
+const processor = await createMarkdownProcessor({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  remarkPlugins: [
+    [
+      remarkGlossaryLink as any,
+      { glossaryDir: '../glossary', excludePaths: ['/news/published/'] },
+    ],
+  ],
+});
+
+const rendered = await processor.render(rawBody);
+const bodyHtml = rendered.code;
+
+// Title rendering — tips often embed inline code in the title
+// (`\`--dangerously-skip-permissions\` — what it actually does`).
+// Mirror the use-cases pattern: turn backtick-delimited spans into <code>.
+function titleToHtml(title: string): string {
+  return title.replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+// Topic-to-cluster mapping mirrors `/tips/index.astro` so the eyebrow on the
+// detail page matches the section the row appeared under in the listing.
+function clusterLabel(topics: string[]): string {
+  const lower = topics.map((t) => t.toLowerCase());
+  if (lower.some((t) => t === 'prompting' || t === 'prompt')) return 'Prompting';
+  if (lower.includes('control')) return 'Control keys';
+  if (lower.some((t) => t === 'workflow' || t === 'commands' || t === 'integrations'))
+    return 'Workflow & commands';
+  if (lower.some((t) => ['context', 'memory', 'claudemd', 'claude.md'].includes(t)))
+    return 'Context discipline';
+  if (lower.some((t) => ['compliance', 'safety', 'data-residency'].includes(t)))
+    return 'Compliance & safety';
+  return 'Other';
+}
+
+const cluster = clusterLabel(entry.data.topics);
+
+function audienceTooltip(a: string): string {
+  if (a === 'beginner') return 'For colleagues new to Claude Code';
+  if (a === 'advanced') return 'For experienced Claude Code users';
+  return 'Applies to everyone';
+}
+
+// Sibling navigation — next tip in alphabetical slug order so the link is
+// deterministic without depending on a missing `order` field.
+const allTips = (await getCollection('tips')).sort((a, b) => a.id.localeCompare(b.id));
+const currentIdx = allTips.findIndex((t) => t.id === entry.id);
+const nextTip =
+  currentIdx >= 0 && currentIdx < allTips.length - 1 ? allTips[currentIdx + 1] : allTips[0];
+
+const heroTitle = entry.data.title;
+const heroSummary = entry.data.ai_summary;
+---
+
+<MarketingShell
+  title={heroTitle}
+  description={heroSummary}
+  surfaceId={`tip-${entry.id}`}
+  width="full"
+  hero="none"
+  mode="reader"
+>
+  <section class="hero hero--stack">
+    <div class="wrap">
+      <div class="hero__intro">
+        <p class="tip-hero__crumbs">
+          <a href="/tips/">← Tips</a>
+          <span aria-hidden="true">·</span>
+          <span>{cluster}</span>
+        </p>
+        <h1 class="hero__title tip-hero__title" set:html={titleToHtml(heroTitle)} />
+        <p class="hero__lede">
+          <Fragment set:html={linkGlossaryTerms(heroSummary)} />
+        </p>
+        <p class="tip-hero__meta">
+          <span
+            class={`listing-pill listing-pill--audience listing-pill--audience-${entry.data.audience}`}
+            title={audienceTooltip(entry.data.audience)}
+          >
+            {entry.data.audience}
+          </span>
+          {entry.data.external_link && (
+            <a class="tip-hero__external" href={entry.data.external_link} target="_blank" rel="noopener">
+              External reference ↗
+            </a>
+          )}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="tip-layout wrap">
+    <article class="tip-body sl-markdown-content" set:html={bodyHtml} />
+  </div>
+
+  {nextTip && nextTip.id !== entry.id && (
+    <section class="tip-next">
+      <div class="wrap">
+        <article class="tip-next__card">
+          <span class="tip-next__eyebrow">Next tip →</span>
+          <h2 class="tip-next__title" set:html={titleToHtml(nextTip.data.title)} />
+          <p class="tip-next__lede" set:html={linkGlossaryTerms(nextTip.data.ai_summary)} />
+          <div class="tip-next__actions">
+            <a class="tip-next__cta tip-next__cta--primary" href={`/tips/${nextTip.id}/`}>
+              Open it →
+            </a>
+            <a class="tip-next__cta tip-next__cta--secondary" href="/tips/">
+              Back to all tips
+            </a>
+          </div>
+        </article>
+      </div>
+    </section>
+  )}
+</MarketingShell>
+
+<style>
+  @layer nbg.components {
+    /* ─── Hero crumbs (matches use-cases detail) ─────────────── */
+    .tip-hero__crumbs {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 0 0 0.5rem 0 !important;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--nbg-muted, #5b6b80);
+    }
+    .tip-hero__crumbs a {
+      color: var(--nbg-accent, #007a8a);
+      text-decoration: none;
+    }
+    .tip-hero__crumbs a:hover { text-decoration: underline; }
+
+    /* ─── Hero title — tip titles often embed inline `code` ─── */
+    .tip-hero__title :global(code) {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.78em;
+      background: var(--nbg-surface-2, #f4f6fa);
+      padding: 0.1em 0.35em;
+      border-radius: var(--nbg-r-sm, 4px);
+      color: var(--nbg-accent, #007a8a);
+    }
+
+    /* ─── Hero meta strip (audience pill + optional external link) ─ */
+    .tip-hero__meta {
+      display: flex !important;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1rem 0 0 0 !important;
+      flex-wrap: wrap;
+    }
+    .tip-hero__external {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.75rem;
+      color: var(--nbg-accent, #007a8a);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .tip-hero__external:hover { text-decoration: underline; }
+
+    /* ─── Single-column reading layout ────────────────────────── */
+    .tip-layout {
+      padding-block: 1.5rem 2.5rem !important;
+    }
+    .tip-body {
+      max-width: 48rem !important;
+      margin: 0 auto !important;
+      color: var(--nbg-ink, #0b1e2e);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    .tip-body :global(h2) {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.5rem !important;
+      line-height: 1.2 !important;
+      letter-spacing: -0.015em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 2.25rem 0 0.75rem !important;
+      padding-top: 1.5rem !important;
+      border-top: 1px solid var(--nbg-hairline, #ebeff5) !important;
+    }
+    .tip-body :global(h2:first-child) {
+      padding-top: 0 !important;
+      border-top: 0 !important;
+      margin-top: 0 !important;
+    }
+    .tip-body :global(h3) {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.15rem !important;
+      line-height: 1.25 !important;
+      letter-spacing: -0.01em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 1.5rem 0 0.5rem !important;
+    }
+    .tip-body :global(p) { margin: 0 0 1rem 0 !important; }
+    .tip-body :global(p:last-child) { margin-bottom: 0 !important; }
+    .tip-body :global(ul),
+    .tip-body :global(ol) {
+      margin: 0 0 1rem 0 !important;
+      padding-left: 1.5rem !important;
+    }
+    .tip-body :global(li) { margin-bottom: 0.4rem !important; }
+    .tip-body :global(strong) {
+      color: var(--nbg-ink, #0b1e2e) !important;
+      font-weight: 600 !important;
+    }
+    .tip-body :global(a) {
+      color: var(--nbg-accent, #007a8a) !important;
+      text-decoration: underline !important;
+      text-decoration-thickness: 1px !important;
+      text-underline-offset: 0.2em !important;
+    }
+    .tip-body :global(a:hover),
+    .tip-body :global(a:focus-visible) {
+      text-decoration-thickness: 2px !important;
+    }
+    .tip-body :global(:not(pre) > code) {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace) !important;
+      font-size: 0.95em !important;
+      background: var(--nbg-surface-2, #f4f6fa) !important;
+      color: var(--nbg-accent, #007a8a) !important;
+      padding: 0.1em 0.35em !important;
+      border-radius: var(--nbg-r-sm, 4px) !important;
+    }
+    .tip-body :global(pre) {
+      background: var(--nbg-surface-2, #f4f6fa) !important;
+      border: 1px solid var(--nbg-hairline, #ebeff5) !important;
+      border-radius: var(--nbg-r-md, 8px) !important;
+      padding: 1rem 1.1rem !important;
+      overflow-x: auto !important;
+      margin: 0 0 1.25rem 0 !important;
+    }
+    .tip-body :global(pre code),
+    .tip-body :global(pre code span) {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace) !important;
+      font-size: 0.875rem !important;
+      line-height: 1.6 !important;
+      background: transparent !important;
+    }
+    .tip-body :global(blockquote) {
+      margin: 1rem 0 !important;
+      padding: 0.8rem 1.1rem !important;
+      border-left: 3px solid var(--nbg-accent, #007a8a) !important;
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 5%, var(--nbg-surface, #ffffff)) !important;
+      color: var(--nbg-ink-2, #1a3148) !important;
+      border-radius: 0 var(--nbg-r-sm, 4px) var(--nbg-r-sm, 4px) 0 !important;
+    }
+    .tip-body :global(blockquote p) { margin: 0 0 0.4rem 0 !important; }
+    .tip-body :global(blockquote p:last-child) { margin-bottom: 0 !important; }
+    .tip-body :global(table) {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      margin: 0 0 1.25rem 0 !important;
+      font-size: 0.95rem !important;
+    }
+    .tip-body :global(th),
+    .tip-body :global(td) {
+      padding: 0.55rem 0.75rem !important;
+      border-bottom: 1px solid var(--nbg-hairline, #ebeff5) !important;
+      text-align: left !important;
+    }
+    .tip-body :global(th) {
+      font-weight: 600 !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      background: var(--nbg-surface-2, #f4f6fa) !important;
+    }
+
+    /* ─── Bottom "Next tip" card (slimmer than use-cases) ─── */
+    .tip-next { padding-block: 2rem 3.5rem; }
+    .tip-next__card {
+      max-width: 48rem;
+      margin: 0 auto;
+      padding: 1.75rem 2rem;
+      border: 1px solid color-mix(in srgb, var(--nbg-accent, #007a8a) 30%, var(--nbg-hairline, #ebeff5));
+      border-radius: var(--nbg-r-lg, 12px);
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 5%, var(--nbg-surface, #ffffff));
+    }
+    .tip-next__eyebrow {
+      display: inline-block;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--nbg-accent, #007a8a);
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .tip-next .tip-next__title {
+      font-family: var(--nbg-ff-serif, Newsreader, Georgia, serif) !important;
+      font-weight: 500 !important;
+      font-size: 1.375rem !important;
+      line-height: 1.2 !important;
+      letter-spacing: -0.01em !important;
+      color: var(--nbg-ink, #0b1e2e) !important;
+      margin: 0 0 0.5rem 0 !important;
+    }
+    .tip-next .tip-next__title :global(code) {
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.82em;
+      background: var(--nbg-surface-2, #f4f6fa);
+      padding: 0.1em 0.35em;
+      border-radius: var(--nbg-r-sm, 4px);
+      color: var(--nbg-accent, #007a8a);
+    }
+    .tip-next__lede {
+      margin: 0 0 1.1rem 0 !important;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--nbg-ink-2, #1a3148);
+    }
+    .tip-next__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+    .tip-next__cta {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.6rem 1.05rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .tip-next__cta--primary {
+      background: var(--nbg-accent, #007a8a);
+      color: #ffffff;
+      border: 1px solid var(--nbg-accent, #007a8a);
+    }
+    .tip-next__cta--primary:hover { filter: brightness(1.06); }
+    .tip-next__cta--secondary {
+      background: transparent;
+      color: var(--nbg-accent, #007a8a);
+      border: 1px solid color-mix(in srgb, var(--nbg-accent, #007a8a) 40%, var(--nbg-hairline, #ebeff5));
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+    .tip-next__cta--secondary:hover {
+      background: color-mix(in srgb, var(--nbg-accent, #007a8a) 8%, transparent);
+    }
+  }
+</style>

@@ -1,0 +1,158 @@
+/* Hover-preview popover for /tips/ — appears beside a
+   `.listing-row[data-tip-slug]` on hover, shows the tip's full body.
+   Lives outside any `<style>` block (plain global stylesheet) because the
+   popover content is cloned from a hidden template at runtime and would
+   never receive Astro's scoped-class hash. */
+
+.tip-preview {
+  position: fixed;
+  z-index: 1000;
+  width: min(900px, calc(100vw - 32px));
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--nbg-surface, #ffffff);
+  color: var(--nbg-ink, #0b1e2e);
+  border: 1px solid var(--nbg-border, #dce3eb);
+  border-radius: 12px;
+  box-shadow:
+    0 24px 56px -24px rgba(11, 30, 46, 0.28),
+    0 4px 12px -6px rgba(11, 30, 46, 0.08);
+  padding: 1.3rem 1.5rem 1.4rem;
+  font-family: var(--nbg-ff-body, system-ui, -apple-system, 'Segoe UI', sans-serif);
+  animation: tip-preview-enter 140ms ease-out;
+}
+.tip-preview[hidden] { display: none; }
+@keyframes tip-preview-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tip-preview { animation: none; }
+}
+.tip-preview__head {
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--nbg-hairline, #ebeff5);
+}
+.tip-preview__eyebrow {
+  margin: 0 0 0.4rem 0;
+  font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--nbg-accent, #007a8a);
+}
+.tip-preview__title {
+  margin: 0;
+  font-family: var(--nbg-ff-serif, 'Newsreader', Georgia, serif);
+  font-weight: 500;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--nbg-ink, #0b1e2e);
+}
+
+/* ─── Body prose (cloned from tip markdown) ──────────────────── */
+.tip-preview__body {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--nbg-ink, #0b1e2e);
+}
+.tip-preview__body p { margin: 0 0 0.9rem 0; }
+.tip-preview__body p:last-child { margin-bottom: 0; }
+.tip-preview__body h2 {
+  font-family: var(--nbg-ff-serif, 'Newsreader', Georgia, serif);
+  font-weight: 500;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--nbg-ink, #0b1e2e);
+  margin: 1.75rem 0 0.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--nbg-hairline, #ebeff5);
+}
+.tip-preview__body h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.tip-preview__body h3 {
+  font-family: var(--nbg-ff-serif, 'Newsreader', Georgia, serif);
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: var(--nbg-ink, #0b1e2e);
+  margin: 1.2rem 0 0.4rem;
+}
+.tip-preview__body ul,
+.tip-preview__body ol {
+  margin: 0 0 0.9rem 0;
+  padding-left: 1.4rem;
+}
+.tip-preview__body li { margin-bottom: 0.35rem; }
+.tip-preview__body strong {
+  color: var(--nbg-ink, #0b1e2e);
+  font-weight: 600;
+}
+.tip-preview__body a {
+  color: var(--nbg-accent, #007a8a);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+.tip-preview__body :not(pre) > code {
+  font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+  font-size: 0.9em;
+  background: var(--nbg-surface-2, #f4f6fa);
+  color: var(--nbg-accent, #007a8a);
+  padding: 0.08em 0.32em;
+  border-radius: var(--nbg-r-sm, 4px);
+}
+.tip-preview__body pre {
+  background: var(--nbg-surface-2, #f4f6fa);
+  border: 1px solid var(--nbg-hairline, #ebeff5);
+  border-radius: var(--nbg-r-md, 8px);
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  margin: 0 0 1rem 0;
+}
+.tip-preview__body pre code,
+.tip-preview__body pre code span {
+  font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+  font-size: 0.825rem;
+  line-height: 1.55;
+  background: transparent;
+}
+.tip-preview__body blockquote {
+  margin: 0.9rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--nbg-accent, #007a8a);
+  background: color-mix(in srgb, var(--nbg-accent, #007a8a) 5%, var(--nbg-surface, #ffffff));
+  color: var(--nbg-ink-2, #1a3148);
+  border-radius: 0 var(--nbg-r-sm, 4px) var(--nbg-r-sm, 4px) 0;
+}
+.tip-preview__body blockquote p { margin: 0 0 0.4rem 0; }
+.tip-preview__body blockquote p:last-child { margin-bottom: 0; }
+.tip-preview__body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+}
+.tip-preview__body th,
+.tip-preview__body td {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--nbg-hairline, #ebeff5);
+  text-align: left;
+}
+.tip-preview__body th {
+  font-weight: 600;
+  color: var(--nbg-ink, #0b1e2e);
+  background: var(--nbg-surface-2, #f4f6fa);
+}
+
+/* The hidden body container — `<script type="text/x-tip-body">` is already
+   non-rendering; this defends against any future rule that would accidentally
+   reveal its content. */
+.listing-row .tip-body-template { display: none !important; }

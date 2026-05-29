@@ -224,6 +224,46 @@
     letter-spacing: -0.012em;
     color: var(--nbg-ink, #0b1e2e);
   }
+  /* Tip listing — row title is a link, whole row is clickable via a stretched
+     `::after` overlay anchored to the title link. Pin button stays clickable
+     above the overlay. Decorative pills below let clicks pass through. */
+  .listing-row__title-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .listing-row__title-link:hover,
+  .listing-row__title-link:focus-visible {
+    color: var(--nbg-accent, #007a8a);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+  .listing-row--linked { cursor: pointer; }
+  .listing-row--linked .listing-row__title-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+  }
+  .listing-row--linked .listing-row__pin,
+  .listing-row--linked .listing-row__meta {
+    position: relative;
+    z-index: 2;
+  }
+  .listing-row--linked .listing-pill {
+    position: relative;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .listing-row--linked:focus-within {
+    outline: 2px solid var(--nbg-accent, #007a8a);
+    outline-offset: 2px;
+  }
+  .listing-row--linked .listing-row__title-link:focus-visible {
+    outline: none;
+  }
   .listing-row__summary {
     margin: 0;
     font-size: 0.9375rem;

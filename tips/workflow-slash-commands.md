@@ -48,4 +48,12 @@ Three things that make commands compound in value:
 
 When to make a slash command: any prompt you've typed three times. Any prompt the team has explained more than once. Any prompt where the boilerplate (file paths, output format, constraints) is the same and only the topic changes.
 
+## Don't write the markdown by hand — ask Claude
+
+The shape above isn't a syntax to memorise. Describe the workflow and ask Claude to create the command file for you:
+
+> Create a `/triage` slash command for this repo. It should fetch open GitHub issues via `gh`, group them by area (auth, billing, ops), and output a markdown table sorted by priority.
+
+Claude scaffolds `.claude/commands/triage.md` with the right shape — `$ARGUMENTS`, `!`-shell blocks, `@`-file refs where they help. Review the diff like any other change, then commit it so the whole team gets the shortcut.
+
 Skills are the richer, frontmatter-driven sibling of commands — same idea, more knobs. Start with commands; reach for skills when you need stricter control (model selection, allowed-tools restrictions, auto-invocation rules).

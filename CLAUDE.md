@@ -106,6 +106,7 @@ The repo-layout tree above is *informational* — counts cited there may go brie
 - **When you add/remove content** in `glossary/`, `tips/`, `skills/`, `journeys/`, or `news/published/`: run `node scripts/sync-doc-counts.mjs` before committing. CI will fail the PR if you forget.
 - **Doc-drift guard is enforced by a Stop hook** at `.claude/settings.local.json`. At the end of each Claude turn, it runs `git diff --name-only HEAD`; if any source/config file changed but none of `DECISIONS.md` / `SCOPE.md` / `Issues - Pending Items.md` changed, it emits a UI warning. Silent when there's nothing to flag. Per-developer override (gitignored). Run `/hooks` to inspect, edit, or disable.
 - **Tone for all content authored under this project:** *"what I wish I knew a year ago"* — opinionated, plainspoken, no AI-slop hedging, no marketing voice. Assume the reader is a smart colleague new to Claude Code.
+- **When authoring or editing a tip** (`tips/*.md`): apply the beginner test from `docs/reference/authoring-tips.md` — *what is it / when do I reach for it / what do I do next*. For any tip that touches config or syntax (hooks, slash commands, subagents, settings.json, CLI installs), include an "ask Claude to do it for you" cue alongside the worked snippet. Reviewers must ask "does a beginner know what to do after reading this?" before merging.
 
 ## Doc hygiene — keep state files short
 

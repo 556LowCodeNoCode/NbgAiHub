@@ -41,6 +41,14 @@ Hooks are configured in `.claude/settings.json` (project) or `~/.claude/settings
 
 After every `Edit` or `Write`, the lint runs. Claude can't forget it. The hook doesn't need permission. It just happens.
 
+## You don't have to memorise the JSON — ask Claude to set it up
+
+Most newcomers see the snippet above and freeze: *"do I edit this by hand?"* You don't. Tell Claude what you want enforced and let it wire the hook for you.
+
+> Add a hook to this project that runs `npm run lint:fix` after every file edit. Make sure it doesn't run on `.md` files.
+
+Claude finds (or creates) `.claude/settings.json`, drops the right hook block in, and shows you the diff before applying. You stay in the "describe the outcome" lane; the syntax is Claude's job. Same trick for `PreToolUse` blockers, `Stop` test runs, or `UserPromptSubmit` context injections — describe the rule, let Claude write it.
+
 The mental model that helps:
 
 | If the rule is… | …put it in… |

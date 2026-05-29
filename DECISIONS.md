@@ -6,6 +6,57 @@ Per CLAUDE.md doc-hygiene: each entry ≤20 lines, structured as Decision (bulle
 
 ---
 
+## 2026-05-29 (follow-up 2) — Tips listing: whole-row click + hover-preview popover
+
+**Trigger:** detail-page-only nav left ~80% of the row real estate inert. User asked for whole-row click + a hover popup with the body so readers can scan in place.
+
+**Decision:**
+- **Whole row clickable** — `.listing-row__title-link::after` is a stretched overlay (`position: absolute; inset: 0; z-index: 1`) covering the full `.listing-row` rectangle. Pin button gets `position: relative; z-index: 2` to stay independently clickable; decorative pills get `pointer-events: none` so clicks pass through to the overlay.
+- **Hover popover** — one shared `<aside id="tip-preview-popover">`; each row carries a hidden `<script type="text/x-tip-body">` with the pre-rendered body. On 300ms-delayed hover, an inline script clones the body into the popover, sets a title header, and positions: prefer right-of-row, fallback left, fallback below — all clamped to viewport. Dismisses on Esc, mouseleave, scroll, resize. Disabled on `(hover: none), (pointer: coarse)` — touch users tap to navigate.
+- **Body pre-render path** — small in-file markdown→HTML pass (paragraphs, h2-h4, ul/ol, blockquote, fenced code, inline code/bold/links). Skipped the project remark-glossary-link plugin for the popover: triggers don't fire inside the popover anyway, and the path keeps build-time cost flat.
+- **Hang lesson** — first attempt used `<template set:html>` containers + an inline `<style is:global>` block in `tips.astro`. Astro's static-entrypoints phase hung indefinitely. Fix: `<script type="text/x-tip-body" set:html>` + extracted `site/src/styles/tip-preview.css`. Builds clean in 2-3s.
+- **Headless puppeteer verification** — hover shows popover (title + body); click on row body navigates to detail; click on pin stays in place.
+
+**Why:** the detail page reads well but most readers scan. A hover preview lets the catalog stay browsable while exposing the full content; the stretched link makes every row pixel a click target.
+
+**Refs:** `site/src/pages/tips.astro` (markdown pre-render + popover aside + script), `site/src/styles/tip-preview.css` (popover styles), `site/src/styles/listing-rows.css` (stretched-link mechanic). Skip-pattern noted: avoid `<template set:html>` in Astro pages with many entries — it hangs the static-entrypoints build.
+
+---
+
+## 2026-05-29 (follow-up) — Tip detail pages: bodies now actually render on the site
+
+**Trigger:** mid-session check — the /tips listing rendered only `ai_summary` blurbs and there was no per-slug detail route. The 6 tip-body edits from the preceding entry were invisible to a site reader.
+
+**Decision:**
+- Built `site/src/pages/tips/[slug].astro` — slim single-column reading layout (hero crumb + serif title + ai_summary lede + audience badge, then body, then a "Next tip" card). Wires `createMarkdownProcessor` with `remark-glossary-link` so tip bodies get glossary auto-linking. **Fourth page now needs explicit remark wiring** per §S.14 (joins glossary / foundations / day-1).
+- `site/src/pages/tips.astro` row titles wrapped in `<a href="/tips/{slug}/">`. Added `.listing-row__title-link` to `site/src/styles/listing-rows.css` — inherits color, no underline, accent-coloured hover.
+- Sibling navigation uses alphabetical slug order (no `order` field on tips); first tip is reused as the "next" of the last one (wrap behaviour).
+- Verified: all 27 tip detail pages return HTTP 200 from the dev server; the 6 edited tips render the new beginner cues; `npx astro check` clean (0 errors).
+
+**Why:** content quality work is wasted if it doesn't surface. The /tips page was a catalog without click-through — bodies shipped only via the plugin snapshot. Detail pages close the loop so the markdown bodies (the load-bearing content) actually reach site readers.
+
+**Refs:** `site/src/pages/tips/[slug].astro` (new), `site/src/pages/tips.astro` (row-title link wrap), `site/src/styles/listing-rows.css` (`.listing-row__title-link`), Issue: §S.14 page list now four entries.
+
+---
+
+## 2026-05-29 — Tips beginner-test pass + standing authoring rule
+
+**Trigger:** read of all 27 tips through a beginner's eyes — config/syntax tips (hooks, slash commands, subagents) explained the format without telling a newcomer they could ask Claude to write it for them.
+
+**Decision:**
+- Adopted a three-question beginner test as the gate for every tip: *what is it / when do I reach for it / what do I do next*.
+- For tips touching configuration or file format, **require an "ask Claude to do it for you" cue** with a sample one-line prompt alongside the worked snippet.
+- Edited 6 tips: `workflow-hooks-vs-claudemd`, `workflow-slash-commands`, `workflow-subagents`, `workflow-claudemd-iterate`, `workflow-cli-tools`, `prompt-describe-business-value`. The other 21 passed unchanged (most prompting tips already had Bad/Good examples; control-keys like Esc are atomic).
+- Created standing-rule doc `docs/reference/authoring-tips.md` (mirrors the `authoring-glossary-terms.md` pattern) — codifies the test, the cue template, when to include a worked example, and the per-tip workflow checklist.
+- Wired into `CLAUDE.md § Working rules` as a one-line pointer so reviewers apply the test before merging tips.
+- No tip count change → no AUTO sync needed.
+
+**Why:** the hub's audience is bank colleagues who came to Claude Code precisely to *not* memorise config formats. A tip that teaches the JSON schema without telling them they can describe-the-outcome and let Claude wire it up misses the point of the assistant they're holding.
+
+**Refs:** `docs/reference/authoring-tips.md`, 6 edited files under `tips/`, `CLAUDE.md` § Working rules, SCOPE.md *Last updated* 2026-05-29.
+
+---
+
 ## 2026-05-29 — Use Cases v3 follow-up: `:global()` scope fixes for filter chips + OS toggle
 
 **Decision:**

@@ -24,10 +24,106 @@ import TopicFilter from '../components/TopicFilter.astro';
 import PinButton from '../components/PinButton.astro';
 import { linkGlossaryTerms } from '../lib/glossary-link-string';
 import '../styles/listing-rows.css';
+import '../styles/tip-preview.css';
 
 type Tip = CollectionEntry<'tips'>;
 
 const all = await getCollection('tips');
+
+// 2026-05-29: pre-render every tip body to HTML at build time so the listing
+// page's hover-preview popover can show the same prose the detail page
+// renders. Uses a small inline markdown-to-HTML pass rather than the project
+// remark processor — keeps the popover lightweight and avoids 27 extra
+// glossary index reads at build time.
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function inlineMd(s: string): string {
+  let out = '';
+  let i = 0;
+  while (i < s.length) {
+    const tick = s.indexOf('`', i);
+    if (tick === -1) { out += s.slice(i); break; }
+    out += s.slice(i, tick);
+    const end = s.indexOf('`', tick + 1);
+    if (end === -1) { out += s.slice(tick); break; }
+    out += `<code>${s.slice(tick + 1, end)}</code>`;
+    i = end + 1;
+  }
+  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  out = out.replace(/(^|[\s(])_([^_]+)_(?=$|[\s.,;:!?)])/g, '$1<em>$2</em>');
+  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, t, u) => `<a href="${String(u).replace(/"/g, '&quot;')}">${t}</a>`);
+  return out;
+}
+function simpleMarkdown(md: string): string {
+  const lines = md.split('\n');
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i] ?? '';
+    if (line.startsWith('```')) {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && !(lines[i] ?? '').startsWith('```')) {
+        buf.push(lines[i] ?? '');
+        i++;
+      }
+      i++;
+      out.push(`<pre><code>${escapeHtml(buf.join('\n'))}</code></pre>`);
+      continue;
+    }
+    const h = line.match(/^(#{2,4})\s+(.*)$/);
+    if (h && h[1] && h[2]) {
+      out.push(`<h${h[1].length}>${inlineMd(escapeHtml(h[2]))}</h${h[1].length}>`);
+      i++;
+      continue;
+    }
+    if (line.startsWith('> ')) {
+      const buf: string[] = [];
+      while (i < lines.length && (lines[i] ?? '').startsWith('> ')) {
+        buf.push((lines[i] ?? '').slice(2));
+        i++;
+      }
+      out.push(`<blockquote><p>${inlineMd(escapeHtml(buf.join(' ')))}</p></blockquote>`);
+      continue;
+    }
+    if (/^[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i] ?? '')) {
+        items.push(`<li>${inlineMd(escapeHtml((lines[i] ?? '').replace(/^[-*]\s+/, '')))}</li>`);
+        i++;
+      }
+      out.push(`<ul>${items.join('')}</ul>`);
+      continue;
+    }
+    if (/^\d+\.\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i] ?? '')) {
+        items.push(`<li>${inlineMd(escapeHtml((lines[i] ?? '').replace(/^\d+\.\s+/, '')))}</li>`);
+        i++;
+      }
+      out.push(`<ol>${items.join('')}</ol>`);
+      continue;
+    }
+    if (line.trim() === '') { i++; continue; }
+    const buf: string[] = [];
+    while (i < lines.length && (lines[i] ?? '').trim() !== '') {
+      const lp = lines[i] ?? '';
+      if (lp.startsWith('```') || /^#{2,4}\s+/.test(lp) || /^[-*]\s+/.test(lp) || /^\d+\.\s+/.test(lp) || lp.startsWith('> ')) break;
+      buf.push(lp);
+      i++;
+    }
+    if (buf.length > 0) out.push(`<p>${inlineMd(escapeHtml(buf.join(' ')))}</p>`);
+  }
+  return out.join('\n');
+}
+
+const renderedBodies = new Map<string, string>();
+for (const tip of all) {
+  if (typeof tip.body === 'string' && tip.body.trim().length > 0) {
+    renderedBodies.set(tip.id, simpleMarkdown(tip.body));
+  }
+}
 
 // Distinct topic values across the tips collection. Excludes only the
 // always-on `fundamentals` tag so the chip row stays scannable. Earlier
@@ -135,15 +231,18 @@ function audienceTooltip(a: string): string {
               <li>
                 <article
                   id={`tip-${tip.id}`}
-                  class="listing-row"
+                  class="listing-row listing-row--linked"
                   data-audience={tip.data.audience}
                   data-topics={tip.data.topics.join(',')}
+                  data-tip-slug={tip.id}
                 >
                   <div class="listing-row__main">
                     <p class="listing-row__eyebrow">
                       Tip <span class="listing-row__eyebrow-sep">·</span> {cluster.label}
                     </p>
-                    <h3 class="listing-row__title">{tip.data.title}</h3>
+                    <h3 class="listing-row__title">
+                      <a href={`/tips/${tip.id}/`} class="listing-row__title-link">{tip.data.title}</a>
+                    </h3>
                     <p class="listing-row__summary" set:html={linkGlossaryTerms(tip.data.ai_summary)} />
                   </div>
                   <div class="listing-row__meta">
@@ -157,6 +256,14 @@ function audienceTooltip(a: string): string {
                       <PinButton type="tip" slug={tip.id} iconOnly={true} />
                     </div>
                   </div>
+                  {renderedBodies.has(tip.id) && (
+                    <script
+                      type="text/x-tip-body"
+                      class="tip-body-template"
+                      data-tip-body-slug={tip.id}
+                      set:html={renderedBodies.get(tip.id)}
+                    />
+                  )}
                 </article>
               </li>
             ))}
@@ -178,13 +285,16 @@ function audienceTooltip(a: string): string {
             <li>
               <article
                 id={`tip-${tip.id}`}
-                class="listing-row"
+                class="listing-row listing-row--linked"
                 data-audience={tip.data.audience}
                 data-topics={tip.data.topics.join(',')}
+                data-tip-slug={tip.id}
               >
                 <div class="listing-row__main">
                   <p class="listing-row__eyebrow">Tip <span class="listing-row__eyebrow-sep">·</span> Other</p>
-                  <h3 class="listing-row__title">{tip.data.title}</h3>
+                  <h3 class="listing-row__title">
+                    <a href={`/tips/${tip.id}/`} class="listing-row__title-link">{tip.data.title}</a>
+                  </h3>
                   <p class="listing-row__summary" set:html={linkGlossaryTerms(tip.data.ai_summary)} />
                 </div>
                 <div class="listing-row__meta">
@@ -198,6 +308,14 @@ function audienceTooltip(a: string): string {
                     <PinButton type="tip" slug={tip.id} iconOnly={true} />
                   </div>
                 </div>
+                {renderedBodies.has(tip.id) && (
+                  <script
+                    type="text/x-tip-body"
+                    class="tip-body-template"
+                    data-tip-body-slug={tip.id}
+                    set:html={renderedBodies.get(tip.id)}
+                  />
+                )}
               </article>
             </li>
           ))}
@@ -281,6 +399,130 @@ function audienceTooltip(a: string): string {
       } else {
         init();
       }
+    })();
+  </script>
+
+  {/* Hover-preview popover (single shared element).
+       Each `.listing-row[data-tip-slug]` carries a hidden
+       `<script type="text/x-tip-body">` with its pre-rendered body. On row
+       hover the script below copies that content into this aside, sets a
+       title header, and positions it next to the row. Esc dismisses;
+       mouseleave hides. Disabled on coarse-pointer (touch) devices — those
+       tap to navigate via the stretched-link overlay. */}
+  <aside
+    id="tip-preview-popover"
+    class="tip-preview"
+    role="tooltip"
+    hidden
+    aria-hidden="true"
+  ></aside>
+
+  <script is:inline>
+    (function () {
+      var popover = document.getElementById('tip-preview-popover');
+      if (!popover) return;
+      if (window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+        return;
+      }
+      var rows = document.querySelectorAll('.listing-row[data-tip-slug]');
+      if (!rows.length) return;
+
+      var showTimer = null;
+      var hideTimer = null;
+      var activeRow = null;
+
+      function render(row) {
+        var template = row.querySelector('.tip-body-template');
+        if (!template) return false;
+        var bodyHtml = template.textContent || '';
+        if (!bodyHtml.trim()) return false;
+        var titleNode = row.querySelector('.listing-row__title-link');
+        var titleText = titleNode ? (titleNode.textContent || '').trim() : '';
+        popover.innerHTML =
+          '<header class="tip-preview__head">' +
+            '<p class="tip-preview__eyebrow">Tip preview</p>' +
+            '<h3 class="tip-preview__title"></h3>' +
+          '</header>' +
+          '<div class="tip-preview__body"></div>';
+        var titleEl = popover.querySelector('.tip-preview__title');
+        if (titleEl) titleEl.textContent = titleText;
+        var bodyEl = popover.querySelector('.tip-preview__body');
+        if (bodyEl) bodyEl.innerHTML = bodyHtml;
+        return true;
+      }
+
+      function position(row) {
+        var rect = row.getBoundingClientRect();
+        popover.style.left = '0px';
+        popover.style.top = '0px';
+        popover.hidden = false;
+        popover.setAttribute('aria-hidden', 'false');
+        var popRect = popover.getBoundingClientRect();
+        var gap = 16;
+        var pad = 16;
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+        var left, top;
+        if (rect.right + gap + popRect.width <= vw - pad) {
+          left = rect.right + gap;
+          top = rect.top;
+        } else if (rect.left - gap - popRect.width >= pad) {
+          left = rect.left - gap - popRect.width;
+          top = rect.top;
+        } else {
+          left = Math.max(pad, Math.min(rect.left, vw - popRect.width - pad));
+          top = rect.bottom + 8;
+        }
+        if (top + popRect.height > vh - pad) {
+          top = Math.max(pad, vh - popRect.height - pad);
+        }
+        if (top < pad) top = pad;
+        popover.style.left = left + 'px';
+        popover.style.top = top + 'px';
+      }
+
+      function show(row) {
+        if (!render(row)) return;
+        activeRow = row;
+        position(row);
+      }
+      function hide() {
+        popover.hidden = true;
+        popover.setAttribute('aria-hidden', 'true');
+        popover.innerHTML = '';
+        activeRow = null;
+      }
+
+      rows.forEach(function (row) {
+        row.addEventListener('mouseenter', function () {
+          if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+          if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+          show(row);
+        });
+        row.addEventListener('mouseleave', function (e) {
+          if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+          var next = e.relatedTarget;
+          if (next && next.nodeType === 1 && popover.contains(next)) return;
+          hideTimer = setTimeout(function () {
+            if (!popover.matches(':hover')) hide();
+          }, 180);
+        });
+      });
+      popover.addEventListener('mouseenter', function () {
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      });
+      popover.addEventListener('mouseleave', function () {
+        hideTimer = setTimeout(function () { hide(); }, 120);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !popover.hidden) hide();
+      });
+      window.addEventListener('scroll', function () {
+        if (!popover.hidden) hide();
+      }, { passive: true });
+      window.addEventListener('resize', function () {
+        if (!popover.hidden) hide();
+      });
     })();
   </script>
 </MarketingShell>

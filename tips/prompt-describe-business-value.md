@@ -18,3 +18,9 @@ Good: "I want a page that shows only active users."
 When you prescribe the steps, you constrain Claude to *your* solution — which may be worse than what it would write from scratch. Tell it the *outcome* (the business value, the user-visible behaviour) and let it pick the implementation. Then review the diff.
 
 The one exception: if you have a hard constraint (a specific function MUST be used, a specific library is mandated), pin that as a constraint — but still let Claude pick the rest.
+
+A get-unstuck move when the outcome feels fuzzy in your own head: describe the *user* and let Claude phrase the outcome for you.
+
+> A retail customer-service agent is using this dashboard. They need to see — at a glance — which customers complained this week. Help me phrase the outcome I should be asking for.
+
+Claude turns "I want… something useful for agents" into a sharp outcome line. Reuse that line as the actual ask.

@@ -33,6 +33,12 @@ You don't have to tell Claude how. It knows the syntax. You just ask:
 
 Claude reaches for `gh pr diff 142` on its own.
 
+Not sure whether `gh` is already installed? Don't check by hand — ask Claude:
+
+> Is `gh` installed on this machine? If not, install it and walk me through `gh auth login`.
+
+Claude runs `which gh`, installs via Homebrew or apt if missing, and tells you the one interactive step (`gh auth login`) you have to run yourself. Same trick for `az`, `aws`, and the other CLIs below.
+
 Other CLIs worth knowing exist for the same reason:
 
 - **`az`** (Azure) — `az resource list`, `az webapp logs`, `az keyvault secret show`. The bank's Azure footprint is reachable from the same Claude session that writes the code.

@@ -78,6 +78,45 @@ const PIN_TYPE_LABELS = {
       hidden
       aria-labelledby="my-pins-anon-heading"
     >
+      {/* Rejection banner — only visible when the previous session ended
+          because GitHub rejected the stored token (TokenInvalidError). The
+          script flips it on by reading auth.wasTokenRejected(). Reading
+          this is what turns "the site forgot me" into a clear next step. */}
+      <div
+        class="my-pins__rejection-banner"
+        data-my-pins-rejection-banner
+        role="status"
+        hidden
+      >
+        <div class="my-pins__rejection-body">
+          <p class="my-pins__rejection-headline">
+            Your previous token was rejected by GitHub — most likely it expired.
+          </p>
+          <p class="my-pins__rejection-lede">
+            GitHub personal access tokens expire by default. Generate a new
+            one and pick <strong>“No expiration”</strong> this time so you
+            don’t have to do this again.
+          </p>
+        </div>
+        <div class="my-pins__rejection-actions">
+          <button
+            type="button"
+            class="my-pins__rejection-signin"
+            data-my-pins-rejection-signin
+          >
+            Sign in again
+          </button>
+          <button
+            type="button"
+            class="my-pins__rejection-dismiss"
+            data-my-pins-rejection-dismiss
+            aria-label="Dismiss this notice"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+
       <div class="my-pins__anon-grid">
         <div class="my-pins__anon-main">
           <span class="my-pins__anon-eyebrow">Sign in</span>
@@ -281,6 +320,110 @@ const PIN_TYPE_LABELS = {
        section-padding gap. */
     .my-pins__body {
       padding-block: 2rem 4rem;
+    }
+
+    /* Token-rejection banner — only renders when the user landed here
+       because GitHub rejected their stored PAT. Amber-tinted "soft warning"
+       palette so it reads as informative rather than alarming. Tells the
+       user exactly why they got logged out + what to pick this time. */
+    .my-pins__rejection-banner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.1rem 1.35rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid color-mix(in srgb, #b45309 35%, transparent);
+      border-radius: var(--nbg-r-lg, 12px);
+      background: color-mix(in srgb, #fef3c7 60%, var(--nbg-bg, #fff));
+      color: var(--nbg-ink, #1a2030);
+    }
+    .my-pins__rejection-banner[hidden] { display: none; }
+    @media (max-width: 720px) {
+      .my-pins__rejection-banner {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+      }
+    }
+    .my-pins__rejection-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 0;
+    }
+    .my-pins__rejection-headline {
+      margin: 0;
+      font-family: var(--nbg-ff-body);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #78350f;
+      line-height: 1.35;
+    }
+    .my-pins__rejection-lede {
+      margin: 0;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--nbg-ink-2, #4a5563);
+    }
+    .my-pins__rejection-lede strong {
+      color: var(--nbg-ink, #1a2030);
+      font-weight: 600;
+    }
+    .my-pins__rejection-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .my-pins__rejection-signin {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 0.95rem;
+      border-radius: var(--nbg-r-md, 8px);
+      border: 1px solid var(--nbg-color-accent-strong, #0a8a7d);
+      background: var(--nbg-color-accent-strong, #0a8a7d);
+      color: var(--nbg-color-fg-on-accent, #fff);
+      font-family: var(--nbg-ff-body);
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+    .my-pins__rejection-signin:hover {
+      background: var(--nbg-color-accent-hover, #00525c);
+      border-color: var(--nbg-color-accent-hover, #00525c);
+      transform: translateY(-1px);
+    }
+    .my-pins__rejection-signin:focus-visible {
+      outline: none;
+      box-shadow: var(--nbg-sh-focus-ring);
+    }
+    .my-pins__rejection-dismiss {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 0.85rem;
+      border-radius: var(--nbg-r-md, 8px);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--nbg-muted, #6b7280);
+      font-family: var(--nbg-ff-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1;
+      cursor: pointer;
+      transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+    .my-pins__rejection-dismiss:hover {
+      background: var(--nbg-surface-2, #f3f4f6);
+      color: var(--nbg-ink, #1a2030);
+      border-color: var(--nbg-hairline, #e1e6ed);
+    }
+    .my-pins__rejection-dismiss:focus-visible {
+      outline: none;
+      box-shadow: var(--nbg-sh-focus-ring);
     }
 
     /* 2-column anonymous card: CTA panel on the left, FAQ aside on the
@@ -748,7 +891,14 @@ const PIN_TYPE_LABELS = {
 </style>
 
 <script>
-  import { readToken, signOut, subscribe } from '../lib/auth.ts';
+  import {
+    readToken,
+    signOut,
+    subscribe,
+    markTokenRejected,
+    wasTokenRejected,
+    clearTokenRejectedFlag,
+  } from '../lib/auth.ts';
   import { TokenInvalidError } from '../lib/api-fetch.ts';
   import { findOrCreateFavoritesGist, removeFavorite } from '../lib/gist.ts';
   import {
@@ -850,10 +1000,21 @@ const PIN_TYPE_LABELS = {
     }
   }
 
+  function getRejectionBanner(): HTMLElement | null {
+    return document.querySelector<HTMLElement>('[data-my-pins-rejection-banner]');
+  }
+
+  function syncRejectionBanner(): void {
+    const banner = getRejectionBanner();
+    if (banner === null) return;
+    banner.hidden = !wasTokenRejected();
+  }
+
   function showAnonymousPanel(): void {
     hide(getLoading());
     hide(getSignedIn());
     show(getAnonymous());
+    syncRejectionBanner();
   }
 
   function showLoadingState(): void {
@@ -987,6 +1148,7 @@ const PIN_TYPE_LABELS = {
       // instead of a wall of JSON. signOut() fires the auth subscriber
       // which re-renders this page in signed-out mode.
       if (err instanceof TokenInvalidError) {
+        markTokenRejected();
         signOut();
         return;
       }
@@ -1064,6 +1226,26 @@ const PIN_TYPE_LABELS = {
     });
   }
 
+  function wireRejectionBanner(): void {
+    const signinBtn = document.querySelector<HTMLButtonElement>(
+      '[data-my-pins-rejection-signin]',
+    );
+    if (signinBtn !== null) {
+      signinBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('nbgaihub:open-signin-modal'));
+      });
+    }
+    const dismissBtn = document.querySelector<HTMLButtonElement>(
+      '[data-my-pins-rejection-dismiss]',
+    );
+    if (dismissBtn !== null) {
+      dismissBtn.addEventListener('click', () => {
+        clearTokenRejectedFlag();
+        syncRejectionBanner();
+      });
+    }
+  }
+
   async function render(): Promise<void> {
     const state = readAuthState();
     if (state === null) {
@@ -1075,6 +1257,7 @@ const PIN_TYPE_LABELS = {
 
   function init(): void {
     wireSignInButton();
+    wireRejectionBanner();
     void render();
 
     subscribe((authState) => {

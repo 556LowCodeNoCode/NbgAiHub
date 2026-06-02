@@ -24,6 +24,12 @@ export type AuthSubscriber = (state: AuthState) => void;
 const TOKEN_KEY = 'nbgaihub.gh_token';
 const USER_KEY = 'nbgaihub.gh_user';
 const GIST_ID_KEY = 'nbgaihub.gist_id';
+// Sticky breadcrumb left behind when we sign the user out *because GitHub
+// rejected the token* (most commonly: PAT hit its expiration). Survives
+// signOut() — the anonymous /my-pins panel reads it to render a clear
+// "your token expired" banner instead of looking like the site silently
+// forgot the user. Cleared on a fresh successful signIn().
+const REJECTED_KEY = 'nbgaihub.token_rejected';
 
 const subscribers = new Set<AuthSubscriber>();
 
@@ -135,6 +141,8 @@ export function getUser(): GitHubUser | null {
 export async function signIn(token: string): Promise<GitHubUser> {
   const user = await validateToken(token); // bubbles TokenInvalidError unchanged
   storeToken(token, user);
+  // A fresh sign-in clears any stale "your last token expired" breadcrumb.
+  clearTokenRejectedFlag();
   notify('signed-in');
   return user;
 }
@@ -143,6 +151,29 @@ export async function signIn(token: string): Promise<GitHubUser> {
 export function signOut(): void {
   clearToken();
   notify('signed-out');
+}
+
+/**
+ * Sticky flag: GitHub rejected our stored token (TokenInvalidError observed
+ * by a downstream caller). Call this BEFORE signOut() so the breadcrumb
+ * outlives the clear. The /my-pins anonymous panel reads it to explain the
+ * sudden sign-out instead of looking like the site silently forgot the user.
+ */
+export function markTokenRejected(): void {
+  const storage = getStorage();
+  storage.setItem(REJECTED_KEY, '1');
+}
+
+/** True iff the previous sign-out happened because GitHub rejected the token. */
+export function wasTokenRejected(): boolean {
+  const storage = getStorage();
+  return storage.getItem(REJECTED_KEY) === '1';
+}
+
+/** Clear the rejection breadcrumb. Idempotent. */
+export function clearTokenRejectedFlag(): void {
+  const storage = getStorage();
+  storage.removeItem(REJECTED_KEY);
 }
 
 /**

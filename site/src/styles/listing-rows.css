@@ -21,6 +21,44 @@
     flex-direction: column;
     gap: 0.75rem;
   }
+
+  /* 2026-06-02 — Sticky filter strip. On listing pages (/skills, /tips,
+     /use-cases) we wrap the existing `<div class="hero__filter">` in a
+     sibling `<section class="listing-filter-bar">` (sibling of the
+     listing sections, not nested inside the hero). The OUTER section
+     handles sticky positioning + background; the INNER `.hero__filter`
+     keeps the existing layout/chip styling that the rest of the codebase
+     already targets — no parent-selector breakage.
+     Sentinel-based `data-stuck` attribute is flipped by the inline
+     script in scripts/sticky-filter-bar.ts (IntersectionObserver on a
+     1px probe just above the bar). */
+  .listing-filter-bar {
+    position: sticky;
+    /* Starlight's <header> is position:fixed at top:0 with height
+       var(--sl-nav-height) (3.5rem mobile / 4rem desktop). If we stick
+       at top:0 the bar slides UNDER the nav. Pin to the bottom of the
+       nav instead so the bar sits flush below it when stuck. */
+    top: var(--sl-nav-height, 4rem);
+    z-index: 20;
+    background: var(--nbg-surface, #ffffff);
+    border-bottom: 1px solid var(--nbg-hairline, #ebeff5);
+    padding-block: 0.75rem 0.75rem;
+    transition: box-shadow 140ms ease;
+  }
+  .listing-filter-bar[data-stuck='true'] {
+    box-shadow: 0 6px 14px -12px rgba(11, 30, 46, 0.22);
+  }
+  /* Inside the sticky strip, override the hero-variant margin-top so the
+     filter sits flush with the strip's own padding. Use flex-column with
+     a slightly-larger-than-default gap so the SHOW row and the FILTER
+     BY TOPIC row breathe — at default block flow they read as squished
+     together (DECISIONS 2026-06-02 round 2). */
+  .listing-filter-bar .hero__filter {
+    margin-top: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
   /* Drop the chunky bordered chrome around both filters AND force them
      into a label-above-chips column layout. Without the column override,
      audience (3 short chips) puts its label inline-left while topic

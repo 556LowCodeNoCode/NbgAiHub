@@ -547,3 +547,19 @@ Three rounds of prompt tightening across 2026-05-18 are captured here as the set
 **Why:** Newcomer guidance pointed at fictional install paths; the actual internal upstream wasn't surfaced; row bodies were never readable on the site. Visit motion is now: scan listing → click → read full body → see structured install steps.
 
 **References:** Commits in this push; `skills/create-sandbox.md`, `skills/{frontend-design,gsd}.md`, `tips/claudemd-worked-example.md`, `site/src/pages/skills.astro`, `site/src/pages/skills/[slug].astro`, `site/src/content.config.ts`.
+
+---
+
+## 2026-06-02 (round 2) — Sticky filter strip + use-case card footer
+
+**Trigger:** User asked for a sticky filter bar on /skills, /tips, /use-cases so the chips stay reachable while scrolling, and for the use-case duration chip to move so the pin overlay had a clear top-right.
+
+- **Sticky filter strip** — extracted `<div class="hero__filter">` out of each page's `<section class="hero">` and wrapped it in a sibling `<section class="listing-filter-bar">`. Outer section handles `position: sticky; top: var(--sl-nav-height, 4rem)` + background + soft drop shadow when stuck; inner `.hero__filter` keeps its existing chip layout/styling so no parent-selector breakage. `sticky` at `top: 0` slid the bar UNDER Starlight's `position: fixed` `<header>` — pinning at the nav height fixed it.
+- **Sentinel-based stuck detection** — `site/src/scripts/sticky-filter-bar.ts` inserts a 1px probe just above each bar and flips `data-stuck="true"` via IntersectionObserver when the probe leaves the viewport. Drives the drop-shadow CSS variant.
+- **Use-case card footer** — `__time` chip moved from the head row to a new `__footer` flex row that holds CTA + time-estimate side by side (space-between). Top-right corner clear for the pin overlay.
+- **Use-case filter bug** — moving the filter out of the hero exposed a latent bug: `.usecase-card-wrap { display: block !important }` (set to override the default list-item display) defeated the JS's `style.display = 'none'` so chip clicks toggled `aria-pressed` but cards stayed visible. Fixed by switching the JS to toggle a `data-filtered-out` attribute, with a matching `.usecase-card-wrap[data-filtered-out] { display: none !important }` rule.
+- **Polish** — bumped the inner `.hero__filter` gap to 1rem inside `.listing-filter-bar` so the SHOW row and FILTER BY TOPIC row breathe; was reading squished on tips/skills.
+
+**Why:** Filter chips were silently scrolling off-screen on long listings; pin overlay was colliding with the duration chip; use-case unit-filter looked like it worked (chips highlighted) but wasn't actually filtering — a worse UX than no filter at all.
+
+**References:** `site/src/scripts/sticky-filter-bar.ts` (new); `site/src/styles/listing-rows.css` (`.listing-filter-bar` block); `site/src/pages/{skills,tips}.astro`, `site/src/pages/use-cases/index.astro`.

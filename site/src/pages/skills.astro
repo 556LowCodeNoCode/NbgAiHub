@@ -91,6 +91,15 @@ const grouped = GROUPS.map((g) => ({
           <Fragment set:html={linkGlossaryTerms("A curated catalog of Claude Code skills and plugins — the ones we keep reaching for. Each entry tells you what the skill does, who it's for, the slash command you type in Claude, and how to install it.")} />
         </p>
       </div>
+    </div>
+  </section>
+
+  {/* Sticky filter strip — sibling of the listing sections so it stays
+      visible through the entire scroll, not just while the hero is on
+      screen. Inner `.hero__filter` retains the existing chip layout
+      styling that other CSS targets via that selector. */}
+  <section class="listing-filter-bar" data-listing-filter-bar>
+    <div class="wrap">
       <div class="hero__filter">
         <AudienceFilter scope=".listing-row[data-audience]" />
         <TopicFilter topics={allCategories} scope=".listing-row[data-topics]" />
@@ -220,6 +229,10 @@ const grouped = GROUPS.map((g) => ({
     );
   })}
 </MarketingShell>
+
+<script>
+  import '../scripts/sticky-filter-bar.ts';
+</script>
 
 <style>
   @layer nbg.components {

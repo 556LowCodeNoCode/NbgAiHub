@@ -61,10 +61,16 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
           <small><a href="/start-here/day-1/">→ haven't done Day 1 yet? Start there.</a></small>
         </p>
       </div>
+    </div>
+  </section>
+
+  {/* Sticky filter strip — sibling of the gallery section so it stays
+      visible the whole scroll. Inner `.hero__filter` retains the
+      existing chip layout styling that this page already targets. Unit
+      filter only; audience filter was removed 2026-05-29. */}
+  <section class="listing-filter-bar" data-listing-filter-bar>
+    <div class="wrap">
       <div class="hero__filter">
-        {/* Unit filter only. Audience filter was removed 2026-05-29 —
-            every use case is meant to be readable by everyone, so the
-            beginner/experienced distinction added noise without value. */}
         <form
           class="topic-filter not-content"
           data-scope=".usecase-card[data-business-unit]"
@@ -111,7 +117,6 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
                 <span class="usecase-card__eyebrow">
                   {BUSINESS_UNIT_LABELS[u.data.business_unit] ?? u.data.business_unit}
                 </span>
-                <span class="usecase-card__time">{u.data.time_estimate}</span>
               </div>
               <h2 class="usecase-card__title" data-pin-title>{u.data.title}</h2>
               <p class="usecase-card__summary" set:html={linkGlossaryTerms(u.data.ai_summary)} />
@@ -119,9 +124,12 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
                 <span class="usecase-card__outcome-label">You end up with</span>
                 <p class="usecase-card__outcome-body">{u.data.outcome}</p>
               </div>
-              <span class="usecase-card__cta">
-                Open the walkthrough <span aria-hidden="true">→</span>
-              </span>
+              <div class="usecase-card__footer">
+                <span class="usecase-card__cta">
+                  Open the walkthrough <span aria-hidden="true">→</span>
+                </span>
+                <span class="usecase-card__time">{u.data.time_estimate}</span>
+              </div>
             </a>
             {/* Hover-revealed pin button — sits above the anchor, top-right.
                 Mirrors the listing-row__pin pattern on /tips and /skills.
@@ -189,7 +197,15 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
         cards.forEach(function (c) {
           var match = sel.length === 0 || sel.indexOf(c.dataset.businessUnit) !== -1;
           var li = c.parentElement;
-          if (li) li.style.display = match ? '' : 'none';
+          // Use a data attribute (paired with a CSS rule below) instead
+          // of inline `style.display = 'none'`. The .usecase-card-wrap
+          // base rule sets `display: block !important` (needed against
+          // Starlight's list-item default), which would otherwise defeat
+          // any inline display change.
+          if (li) {
+            if (match) li.removeAttribute('data-filtered-out');
+            else li.setAttribute('data-filtered-out', '');
+          }
           if (match) visible += 1;
         });
         if (empty) empty.setAttribute('data-visible', visible === 0 ? 'true' : 'false');
@@ -212,6 +228,10 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
     })();
   </script>
 </MarketingShell>
+
+<script>
+  import '../../scripts/sticky-filter-bar.ts';
+</script>
 
 <style>
   @layer nbg.components {
@@ -338,6 +358,12 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
       position: relative !important;
       display: block !important;
     }
+    /* Filter hidden state — JS toggles `data-filtered-out` on the <li>
+       when its card's business-unit isn't in the active selection. Needs
+       `!important` to beat the base `display: block !important` rule. */
+    .usecase-card-wrap[data-filtered-out] {
+      display: none !important;
+    }
     .usecase-card__pin {
       position: absolute !important;
       top: 0.85rem !important;
@@ -462,11 +488,20 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
       line-height: 1.5 !important;
       color: var(--nbg-ink, #0b1e2e) !important;
     }
+    /* Footer row holds the CTA on the left and the time-estimate chip on
+       the right. Time moved out of `__head` (2026-06-02) so the top-right
+       corner stays clear for the hover-revealed pin overlay. */
+    .usecase-card__footer {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
     .usecase-card__cta {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      margin-top: 1rem;
       font-family: var(--nbg-ff-mono, ui-monospace, monospace);
       font-size: 0.75rem;
       font-weight: 600;

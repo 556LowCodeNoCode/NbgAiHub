@@ -209,6 +209,14 @@ function audienceTooltip(a: string): string {
           <Fragment set:html={linkGlossaryTerms("Prompts, gotchas, and workflow recipes — clustered by theme so you can skim the area you need. Opinionated and plainspoken.")} />
         </p>
       </div>
+    </div>
+  </section>
+
+  {/* Sticky filter strip — sibling of the listing sections so it stays
+      visible through the entire scroll. Inner `.hero__filter` retains
+      the existing chip layout styling. */}
+  <section class="listing-filter-bar" data-listing-filter-bar>
+    <div class="wrap">
       <div class="hero__filter">
         <AudienceFilter scope=".listing-row[data-audience]" />
         <TopicFilter topics={allTopics} scope=".listing-row[data-topics]" />
@@ -526,3 +534,7 @@ function audienceTooltip(a: string): string {
     })();
   </script>
 </MarketingShell>
+
+<script>
+  import '../scripts/sticky-filter-bar.ts';
+</script>

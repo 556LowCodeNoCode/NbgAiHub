@@ -77,7 +77,7 @@
               </div>
               <div class="nbg-signin__preview-field">
                 <label>Expiration</label>
-                <div class="nbg-signin__preview-input">your choice — 30 days is a good default</div>
+                <div class="nbg-signin__preview-input">no expiration is fine — gist scope only</div>
               </div>
               <div class="nbg-signin__preview-field">
                 <label>Select scopes</label>
@@ -185,8 +185,12 @@
       padding: 0;
       background: var(--nbg-surface, #ffffff);
       color: var(--nbg-ink, #0b1e2e);
-      max-width: 30rem;
+      /* Wider on desktop so Step 01 (create token) + Step 02 (paste token)
+         + Sign in button all sit in one viewport without scrolling. */
+      max-width: 56rem;
       width: calc(100% - 2rem);
+      max-height: calc(100vh - 2rem);
+      overflow-y: auto;
       box-shadow:
         0 24px 60px rgba(11, 30, 46, 0.18),
         0 8px 24px rgba(11, 30, 46, 0.10);
@@ -287,8 +291,20 @@
       margin: 0;
       padding: 0;
       display: grid;
+      /* 2-column on wide viewports — Step 01 left (token preview), Step 02
+         right (paste field). Step 01 is much taller than Step 02 because of
+         the GitHub-page mock; `align-items: start` keeps Step 02 sitting at
+         the top of its column so the input + Sign in button stay near the
+         centerline. Collapses to single column at 720px (see below). */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
       gap: 1rem;
       counter-reset: nbg-signin-step;
+    }
+    @media (max-width: 720px) {
+      .nbg-signin__steps {
+        grid-template-columns: 1fr;
+      }
     }
     .nbg-signin__step {
       display: grid;
@@ -347,34 +363,51 @@
       color: var(--nbg-accent-ink, #00525c);
     }
 
+    /* Primary action of Step 01 — the user has to leave for github.com to
+       generate the token, so this link is styled as a filled accent button
+       (same visual weight as Sign in) rather than a quiet outline. The
+       teal pulse-ring draws the eye on first open. */
     .nbg-signin__deeplink {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      margin-top: 0.25rem;
-      padding: 0.5rem 0.8rem;
-      background: var(--nbg-surface, #ffffff);
-      color: var(--nbg-accent, #007a8a);
+      margin-top: 0.85rem;
+      padding: 0.65rem 1rem;
+      background: var(--nbg-accent, #007a8a);
+      color: #ffffff;
       text-decoration: none;
-      border: 1px solid var(--nbg-border, #dce3eb);
+      border: 1px solid var(--nbg-accent, #007a8a);
       border-radius: 8px;
       font-family: var(--nbg-ff-body);
-      font-size: 0.8125rem;
+      font-size: 0.875rem;
       font-weight: 600;
       width: fit-content;
+      box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--nbg-accent, #007a8a) 55%, transparent);
+      animation: nbg-signin-deeplink-pulse 2.4s ease-in-out 1s 2 both;
       transition:
         border-color 120ms ease,
         background-color 120ms ease,
-        color 120ms ease;
+        color 120ms ease,
+        transform 120ms ease,
+        box-shadow 120ms ease;
     }
     .nbg-signin__deeplink:hover {
-      border-color: var(--nbg-accent, #007a8a);
-      background: var(--nbg-accent-soft, #e0f2f4);
-      color: var(--nbg-accent-ink, #00525c);
+      background: var(--nbg-accent-ink, #00525c);
+      border-color: var(--nbg-accent-ink, #00525c);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--nbg-accent, #007a8a) 65%, transparent);
     }
     .nbg-signin__deeplink:focus-visible {
       outline: none;
       box-shadow: var(--nbg-sh-focus-ring);
+    }
+    @keyframes nbg-signin-deeplink-pulse {
+      0%, 100% { box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--nbg-accent, #007a8a) 55%, transparent), 0 0 0 0 color-mix(in srgb, var(--nbg-accent, #007a8a) 40%, transparent); }
+      50%      { box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--nbg-accent, #007a8a) 55%, transparent), 0 0 0 8px transparent; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .nbg-signin__deeplink { animation: none; }
     }
 
     /* UAT T13 V1 — inline visual cue of the GitHub token-creation page.
@@ -640,7 +673,6 @@
     /* ─── Mobile ─────────────────────────────────────────────────────── */
     @media (max-width: 480px) {
       .nbg-signin {
-        max-width: none;
         width: calc(100% - 1.5rem);
       }
       .nbg-signin__form {

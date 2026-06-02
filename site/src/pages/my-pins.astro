@@ -975,7 +975,10 @@ const PIN_TYPE_LABELS = {
     try {
       const gistResult = await findOrCreateFavoritesGist(token);
       gistId = gistResult.gistId;
-      const indices = await fetchAllPinIndices();
+      // BASE_URL is '/' locally and '/NbgAiHub/' on GitHub Pages — without
+      // this prefix the deployed site fetches /_data/tip-index.json against
+      // the org-root and 404s. Trailing slash is fine — indexUrlFor trims.
+      const indices = await fetchAllPinIndices(import.meta.env.BASE_URL);
       favourites = joinFavoritesWithIndex(gistResult.document.favourites, indices);
     } catch (err) {
       // Token rejected by GitHub (revoked / expired / wrong scope). The

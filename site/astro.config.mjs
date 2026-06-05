@@ -34,7 +34,7 @@ export default defineConfig({
   // External URL — Astro emits a meta-refresh + JS fallback HTML page
   // at /news/ in the static build. Per the 2026-05-25 nav rework.
   redirects: {
-    '/news/': 'https://biks2013.github.io/AgentNews/',
+    '/news/': 'https://the-agent-daily.org/',
   },
 
   // §S.14.5 — Glossary auto-linking. See docs/refined-requests/glossary-tooltips.md
@@ -174,7 +174,7 @@ export default defineConfig({
         { label: 'Glossary', link: '/glossary/' },
         {
           label: 'News ↗',
-          link: 'https://biks2013.github.io/AgentNews/',
+          link: 'https://the-agent-daily.org/',
           attrs: { target: '_blank', rel: 'noopener' },
         },
         { label: 'My Pins', link: '/my-pins/' },

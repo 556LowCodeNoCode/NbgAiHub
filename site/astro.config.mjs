@@ -124,6 +124,7 @@ export default defineConfig({
         './src/styles/motion.css',
         './src/styles/content-prose.css',
         './src/styles/content-chrome.css',
+        './src/styles/search-modal.css',
       ],
       components: {
         // Header override (2026-05-19 unified-header refactor): on splash

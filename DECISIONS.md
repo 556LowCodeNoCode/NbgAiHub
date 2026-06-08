@@ -6,6 +6,22 @@ Per CLAUDE.md doc-hygiene: each entry ≤20 lines, structured as Decision (bulle
 
 ---
 
+## 2026-06-08 (late evening) — Pagefind search modal re-skin
+
+**Trigger:** Screenshot from user — Starlight's built-in search modal shipped Pagefind UI's generic defaults (harsh black focus border on input, system-font result tiles, yellow `<mark>`, generic chrome) — visually inconsistent with the rest of the hub.
+
+**Decision:**
+- New `site/src/styles/search-modal.css` wired into `astro.config.mjs` `customCss` after `content-chrome.css`.
+- Variable remap on `#starlight__search` (inherits cleanly into Pagefind's `.svelte-XXX` rules — no specificity fight): `--pagefind-ui-primary` → `--nbg-accent`, `--pagefind-ui-text` → `--nbg-ink`, `--pagefind-ui-background` → `--nbg-surface`, `--pagefind-ui-border` → `--nbg-border`, `--pagefind-ui-tag` → `--nbg-surface-2`, `--pagefind-ui-font` → `--nbg-ff-body`, `--pagefind-ui-border-radius` → `--nbg-r-md`.
+- Direct `!important` overrides (Pagefind UI ships unlayered, per `docs/reference/starlight-cascade-gotcha.md`): input focus ring (teal `border-color` + 3px teal-22% `box-shadow`, replaces browser-default black outline, matches `.glossary-filter-input`); message → mono uppercase eyebrow; result rows → hairline dividers + row-tint hover; `<mark>` → teal-22% color-mix; tag pills + "Load more" → Chip/Button primitive aesthetic; dialog → `--nbg-r-lg` radius, `--nbg-sh-xl` shadow, hairline border, blurred ink-tinted backdrop.
+- Verified on prod build (`npm run build && npm run preview`) via Puppeteer screenshots — both light + dark themes match hub aesthetic.
+
+**Why:** the search dialog is one of the highest-touched surfaces (⌘K), and the harsh black focus border + generic type stood out as obviously not-on-brand. Variable-first keeps Pagefind upgrades painless; `!important` is reserved for the handful of Svelte-scoped selectors that can't be reached otherwise.
+
+**Refs:** new `site/src/styles/search-modal.css`; modified `site/astro.config.mjs` (customCss array) + `CLAUDE.md` (repo-layout tree). No test changes; site build clean.
+
+---
+
 ## 2026-06-08 (evening) — T1 archive sweep + SignInModal Step 01 hierarchy fix
 
 **Trigger:** Post-push survey found ~24 phase reports still in `docs/reference/` that PR B missed (same archive logic, just overlooked). Separately, user flagged SignInModal Step 01 as confusing — the realistic-looking GitHub mock sat above the CTA, so users tried clicking the mock instead of the "Open GitHub token page" button buried below it.

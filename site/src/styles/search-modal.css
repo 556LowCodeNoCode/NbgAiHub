@@ -1,0 +1,186 @@
+/* site/src/styles/search-modal.css
+ *
+ * Re-skins Starlight's <Search /> dialog (Pagefind UI inside) so the in-modal
+ * surface matches the hub aesthetic instead of Pagefind's generic defaults.
+ *
+ * Strategy:
+ *   1. Override Pagefind UI's documented CSS custom properties on
+ *      `#starlight__search` — these inherit into the Svelte-scoped rules
+ *      without fighting their `.svelte-XXX` specificity.
+ *   2. Theme the Starlight dialog wrapper (.dialog-frame, ::backdrop) to
+ *      match our card surface — soft border, larger radius, body-font.
+ *   3. Replace the browser-default black focus outline on the search input
+ *      with the same teal accent ring used on .glossary-filter-input.
+ *   4. Tighten message ("N results for …") to the eyebrow treatment used
+ *      across the hub (mono, uppercase, muted) so it reads as a label, not
+ *      a heading.
+ *
+ * Cascade note: Pagefind UI's Svelte rules ship UNlayered. We can't beat
+ * their `.pagefind-ui__X.svelte-XXX.svelte-XXX` selectors by specificity
+ * from inside `@layer nbg.components`, so any direct override below uses
+ * `!important` (per docs/reference/starlight-cascade-gotcha.md). Variable
+ * remaps inherit cleanly and don't need it.
+ */
+
+@layer nbg.components {
+  /* ─── Pagefind UI variable overrides ─────────────────────────────────
+   * Starlight pre-wires #starlight__search to its own --sl-color-* tokens;
+   * we remap to NBG semantic tokens so the modal stays in sync with the
+   * surrounding theme (light + dark, automatic). */
+  #starlight__search {
+    --pagefind-ui-primary:    var(--nbg-accent);
+    --pagefind-ui-text:       var(--nbg-ink);
+    --pagefind-ui-background: var(--nbg-surface);
+    --pagefind-ui-border:     var(--nbg-border);
+    --pagefind-ui-tag:        var(--nbg-surface-2);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: var(--nbg-r-md);
+    --pagefind-ui-font: var(--nbg-ff-body);
+  }
+
+  /* ─── Dialog chrome — match card surface ─────────────────────────── */
+  site-search dialog {
+    background-color: var(--nbg-bg) !important;
+    border: 1px solid var(--nbg-hairline) !important;
+    color: var(--nbg-ink);
+  }
+  site-search dialog::backdrop {
+    background-color: color-mix(in srgb, var(--nbg-ink) 45%, transparent);
+    -webkit-backdrop-filter: saturate(140%) blur(6px);
+    backdrop-filter: saturate(140%) blur(6px);
+  }
+  @media (min-width: 50rem) {
+    site-search dialog {
+      border-radius: var(--nbg-r-lg) !important;
+      box-shadow: var(--nbg-sh-xl) !important;
+    }
+  }
+
+  /* ─── Search input — replace the browser-default black focus outline */
+  #starlight__search .pagefind-ui__search-input {
+    font-family: var(--nbg-ff-body) !important;
+    font-weight: var(--nbg-fw-medium) !important;
+    font-size: 1rem !important;
+    color: var(--nbg-ink) !important;
+    background-color: var(--nbg-surface) !important;
+    transition:
+      border-color var(--nbg-dur-fast) var(--nbg-ease-out),
+      box-shadow   var(--nbg-dur-fast) var(--nbg-ease-out);
+  }
+  #starlight__search .pagefind-ui__search-input::placeholder {
+    color: var(--nbg-muted) !important;
+    opacity: 1 !important;
+  }
+  #starlight__search .pagefind-ui__search-input:focus,
+  #starlight__search .pagefind-ui__search-input:focus-visible {
+    outline: none !important;
+    border-color: var(--nbg-accent) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nbg-accent) 22%, transparent) !important;
+  }
+
+  /* Clear button on the right — make it disappear into the input */
+  #starlight__search .pagefind-ui__search-clear {
+    color: var(--nbg-muted) !important;
+    background: transparent !important;
+    font-weight: var(--nbg-fw-medium) !important;
+  }
+  #starlight__search .pagefind-ui__search-clear:hover {
+    color: var(--nbg-ink) !important;
+  }
+
+  /* ─── Results header — "N results for …" as eyebrow label ──────── */
+  #starlight__search .pagefind-ui__message {
+    font-family: var(--nbg-ff-mono) !important;
+    font-size: var(--nbg-fs-xs) !important;
+    font-weight: var(--nbg-fw-medium) !important;
+    letter-spacing: var(--nbg-ls-wide) !important;
+    text-transform: uppercase !important;
+    color: var(--nbg-muted) !important;
+  }
+
+  /* ─── Result rows — softer dividers, body font, hover state ─────── */
+  #starlight__search .pagefind-ui__result {
+    border-top-color: var(--nbg-hairline) !important;
+    padding: 1rem 0.75rem !important;
+    margin: 0 -0.75rem;
+    border-radius: var(--nbg-r-md);
+    transition: background-color var(--nbg-dur-fast) var(--nbg-ease-out);
+  }
+  #starlight__search .pagefind-ui__result:last-of-type {
+    border-bottom-color: var(--nbg-hairline) !important;
+  }
+  #starlight__search .pagefind-ui__result:hover {
+    background-color: var(--nbg-surface-2);
+  }
+
+  /* Title — semibold, body font, link color uses accent on hover */
+  #starlight__search .pagefind-ui__result-title {
+    font-family: var(--nbg-ff-body) !important;
+    font-weight: var(--nbg-fw-semibold) !important;
+    font-size: 1rem !important;
+    line-height: var(--nbg-lh-snug) !important;
+  }
+  #starlight__search .pagefind-ui__result-title .pagefind-ui__result-link {
+    color: var(--nbg-ink) !important;
+    text-decoration: none !important;
+  }
+  #starlight__search .pagefind-ui__result-title .pagefind-ui__result-link:hover {
+    color: var(--nbg-accent) !important;
+    text-decoration: none !important;
+  }
+
+  /* Excerpt — secondary text, smaller, with teal-tinted highlight */
+  #starlight__search .pagefind-ui__result-excerpt {
+    color: var(--nbg-ink-2) !important;
+    font-size: 0.875rem !important;
+    line-height: var(--nbg-lh-normal) !important;
+    font-weight: var(--nbg-fw-regular) !important;
+  }
+  #starlight__search .pagefind-ui__result-excerpt mark {
+    background: color-mix(in srgb, var(--nbg-accent) 22%, transparent) !important;
+    color: var(--nbg-ink) !important;
+    padding: 0 0.15em;
+    border-radius: 2px;
+    font-weight: var(--nbg-fw-semibold);
+  }
+
+  /* Tag pills — match Chip primitive aesthetic */
+  #starlight__search .pagefind-ui__result-tag {
+    font-family: var(--nbg-ff-mono) !important;
+    font-size: 0.75rem !important;
+    color: var(--nbg-muted) !important;
+    background-color: var(--nbg-surface-2) !important;
+    border: 1px solid var(--nbg-hairline);
+  }
+
+  /* Nested sub-results — softer indent guide, lighter type */
+  #starlight__search .pagefind-ui__result-nested .pagefind-ui__result-link::before {
+    background-color: var(--nbg-hairline) !important;
+  }
+
+  /* "Load more" button at the bottom of the results — match Button primitive */
+  #starlight__search .pagefind-ui__button {
+    font-family: var(--nbg-ff-body) !important;
+    font-weight: var(--nbg-fw-medium) !important;
+    color: var(--nbg-ink) !important;
+    background: var(--nbg-surface) !important;
+    border-color: var(--nbg-border) !important;
+    border-radius: var(--nbg-r-md) !important;
+    transition:
+      background-color var(--nbg-dur-fast) var(--nbg-ease-out),
+      border-color     var(--nbg-dur-fast) var(--nbg-ease-out),
+      color            var(--nbg-dur-fast) var(--nbg-ease-out);
+  }
+  #starlight__search .pagefind-ui__button:hover {
+    background: var(--nbg-surface-2) !important;
+    border-color: var(--nbg-accent) !important;
+    color: var(--nbg-accent) !important;
+  }
+
+  /* Close button (mobile "Cancel") — match accent link color */
+  site-search button[data-close-modal] {
+    color: var(--nbg-accent) !important;
+    font-family: var(--nbg-ff-body);
+    font-weight: var(--nbg-fw-medium);
+  }
+}

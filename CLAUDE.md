@@ -44,7 +44,7 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 │   ├── src/components/        ← 10 .astro components (NewsPanel + NewsList removed 2026-06-08)
 │   ├── src/components/primitives/  ← 16 portable primitives — Container, Section, Stack, Cluster, Grid, Split, Card, Button, Badge, Chip, Kbd, Eyebrow, Lede, Display, MotionReveal, StepIndicator (AC36 portability gate: zero @astrojs/starlight imports)
 │   ├── src/styles/tokens/     ← design system — primitives.css (135 tokens), semantic.css (38 × 2 themes), aliases.css (16 --sl-color-* × 2 themes), layers.css (8-layer cascade), legacy.css (absorbed custom.css), index.css (aggregator)
-│   ├── src/styles/            ← content-prose.css + content-chrome.css (Starlight chrome theme override) + motion.css (view-transitions + reduced-motion) + agentnews-layout.css (homepage .hero/.section/.wrap — see Starlight cascade gotcha)
+│   ├── src/styles/            ← content-prose.css + content-chrome.css (Starlight chrome theme override) + motion.css (view-transitions + reduced-motion) + agentnews-layout.css (homepage .hero/.section/.wrap — see Starlight cascade gotcha) + search-modal.css (Pagefind UI re-skin inside Starlight's <Search/> dialog)
 │   ├── src/scripts/           ← motion.ts (IntersectionObserver reveal utility — 50 LOC) + glossary-filter.ts
 │   ├── src/lib/               ← 6 TS modules: slug, auth, api-fetch, gist, skill-types, pin-store, glossary-link-string (news.ts + news-sections.ts + submission.ts removed 2026-06-08)
 │   ├── src/pages/             ← /skills, /tips, /glossary, /start-here/day-1, /start-here/foundations, /my-pins, /about, /use-cases/* (legacy /news, /reference, /contribute, /submit-skill removed)

@@ -37,13 +37,6 @@ Counts are kept honest by `node scripts/sync-doc-counts.mjs` + a docs-drift CI c
 
 ---
 
-## What's not used right now
-
-- **On-site news listing.** The `/news/` route still builds from `news/published/*.md`, but no nav link points at it — News redirects out. The pipeline keeps publishing so the archive stays warm if we ever flip the redirect back.
-- **Skill submission web form.** Removed 2026-05-25. Contributions flow through the normal repo PR path (the CI validator above is still wired).
-
----
-
 ## Repo shape (short version)
 
 ```

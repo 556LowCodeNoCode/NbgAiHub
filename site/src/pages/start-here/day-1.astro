@@ -485,12 +485,11 @@ const heroSummary = entry.data.ai_summary;
       align-self: start;
     }
     @media (max-width: 960px) {
+      /* Hide the sidebar STEPS list on phone/tablet — the top
+         .journey-overview cards already act as a visual table of
+         contents, and showing both creates redundant navigation. */
       .day-toc {
-        position: static;
-        border: 1px solid var(--nbg-hairline);
-        border-radius: var(--nbg-r-md, 8px);
-        padding: 1rem;
-        background: var(--nbg-surface);
+        display: none;
       }
     }
     .day-toc__inner {

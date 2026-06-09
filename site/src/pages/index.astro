@@ -24,6 +24,7 @@ import MarketingShell from '../components/MarketingShell.astro';
 // split / topSkills / topTips deleted with the grids.
 
 const AGENTNEWS_URL = 'https://the-agent-daily.org/';
+const SANDBOX_URL = 'https://claude-code-sandbox.azurewebsites.net/';
 
 // Real-recording demo (2026-05-27). Sonnet 4.6 driven through the
 // claude CLI inside a VHS-recorded PTY — same TUI a colleague sees
@@ -123,6 +124,7 @@ const DEMO_VIDEO = `${import.meta.env.BASE_URL}demo/claude-session.mp4`.replace(
             <a class="router-pill" href="/skills/">Skills</a>
             <a class="router-pill" href="/glossary/">Glossary</a>
             <a class="router-pill" href={AGENTNEWS_URL} target="_blank" rel="noopener">News ↗</a>
+            <a class="router-pill" href={SANDBOX_URL} target="_blank" rel="noopener">Sandbox ↗</a>
           </div>
         </article>
       </div>
@@ -187,6 +189,7 @@ const DEMO_VIDEO = `${import.meta.env.BASE_URL}demo/claude-session.mp4`.replace(
             <li><a href="/start-here/foundations/">Foundations</a></li>
             <li><a href="/start-here/day-1/">Day 1 setup</a></li>
             <li><a href="/use-cases/">Use Cases</a></li>
+            <li><a href={SANDBOX_URL} target="_blank" rel="noopener">Sandbox ↗</a></li>
             <li><a href="/my-pins/">My Pins</a></li>
           </ul>
         </div>
@@ -453,7 +456,7 @@ const DEMO_VIDEO = `${import.meta.env.BASE_URL}demo/claude-session.mp4`.replace(
      label length. */
   .router-card__actions--grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
   }
 

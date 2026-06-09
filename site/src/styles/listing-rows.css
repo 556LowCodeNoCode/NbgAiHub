@@ -129,7 +129,7 @@
   }
   .listing-filter-bar .topic-filter__chip[aria-pressed='true'],
   .listing-filter-bar .audience-filter__option input[type='radio']:checked + .audience-filter__chip {
-    color: #ffffff !important;
+    color: var(--nbg-color-fg-on-accent, #ffffff) !important;
     background: var(--nbg-accent, #007a8a) !important;
     border-color: var(--nbg-accent, #007a8a) !important;
   }
@@ -275,7 +275,7 @@
   }
   .listing-empty__action:hover {
     background: var(--nbg-accent, #007a8a);
-    color: #ffffff;
+    color: var(--nbg-color-fg-on-accent, #ffffff);
   }
 
   /* List + row chrome.

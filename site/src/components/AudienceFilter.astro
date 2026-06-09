@@ -113,7 +113,7 @@ const { scope = '[data-audience]' } = Astro.props;
     /* Active state — accent-teal fill matches the topic-filter active state
        so both filters read as one control vocabulary. */
     .audience-filter__option input[type='radio']:checked + .audience-filter__chip {
-      color: #ffffff;
+      color: var(--nbg-color-fg-on-accent, #ffffff);
       background: var(--nbg-accent, #007a8a);
       border-color: var(--nbg-accent, #007a8a);
     }

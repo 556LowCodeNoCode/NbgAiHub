@@ -137,21 +137,25 @@
 
   /* ─── DARK overrides ─────────────────────────────────────────────── */
   :root[data-theme='dark'] {
-    /* AgentNews flat tokens — dark mode */
-    --nbg-bg:           var(--nbg-c-slate-950);  /* #0b1419 */
-    --nbg-bg-2:         var(--nbg-c-slate-850);  /* #0f1c24 */
-    --nbg-surface:      var(--nbg-c-slate-800);  /* #14232c */
-    --nbg-surface-2:    #1a2d38;
-    --nbg-ink:          #e6edf3;
-    --nbg-ink-2:        #c5d1dc;
+    /* AgentNews flat tokens — dark mode
+     * Tuned 2026-06-09: canvas lifted from slate-950 (#0b1419) and ink
+     * dimmed from #e6edf3 to drop the prior ~17:1 contrast that read as
+     * "OLED-pitch + retinal punch". New ratios sit ~12:1 — Linear/Vercel
+     * comfortable-dark territory while remaining AA-clean. */
+    --nbg-bg:           #10181f;  /* lifted from slate-950 */
+    --nbg-bg-2:         #152029;  /* lifted from slate-850 */
+    --nbg-surface:      #1a2630;  /* lifted from slate-800; still floats above canvas */
+    --nbg-surface-2:    #20303c;
+    --nbg-ink:          #d4dde6;  /* dimmed from #e6edf3 */
+    --nbg-ink-2:        #aebbc8;  /* dimmed from #c5d1dc */
     --nbg-muted:        #8b9aab;
     --nbg-muted-2:      #6b7a8c;
-    --nbg-border:       #243441;
-    --nbg-hairline:     #1c2b36;
+    --nbg-border:       #2a3b48;  /* nudged so it stays visible against lifted bg */
+    --nbg-hairline:     #22323d;
     --nbg-accent:       var(--nbg-c-teal-400);   /* #2dd4bf */
     --nbg-accent-ink:   #67e8f9;
     --nbg-accent-soft:  var(--nbg-c-teal-800);   /* #0a3a42 */
-    --nbg-header-bg:    rgba(11, 20, 25, 0.85);
+    --nbg-header-bg:    rgba(16, 24, 31, 0.85);  /* matches new --nbg-bg */
     --nbg-shadow-md:    0 4px 18px -8px rgba(0, 0, 0, 0.55),
                         0 0 0 1px rgba(255, 255, 255, 0.04);
 
@@ -166,7 +170,11 @@
     --nbg-color-fg-primary:   var(--nbg-ink);
     --nbg-color-fg-secondary: var(--nbg-ink-2);
     --nbg-color-fg-muted:     var(--nbg-muted);
-    --nbg-color-fg-on-accent: var(--nbg-ink);
+    /* Dark mode: text on a teal accent fill is the CANVAS color, not ink.
+     * White-on-mint reads as retina-flash in dark; dark-on-mint reads as
+     * "premium / Linear-y". Light mode keeps #ffffff on accent — that's
+     * the standard call-to-action contrast for a bright page. */
+    --nbg-color-fg-on-accent: var(--nbg-bg);
 
     --nbg-color-border-subtle:  var(--nbg-hairline);
     --nbg-color-border-default: var(--nbg-border);
@@ -236,20 +244,21 @@
    */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
-      --nbg-bg:           var(--nbg-c-slate-950);
-      --nbg-bg-2:         var(--nbg-c-slate-850);
-      --nbg-surface:      var(--nbg-c-slate-800);
-      --nbg-surface-2:    #1a2d38;
-      --nbg-ink:          #e6edf3;
-      --nbg-ink-2:        #c5d1dc;
+      /* Mirror of the explicit-dark block above. Keep values in sync. */
+      --nbg-bg:           #10181f;
+      --nbg-bg-2:         #152029;
+      --nbg-surface:      #1a2630;
+      --nbg-surface-2:    #20303c;
+      --nbg-ink:          #d4dde6;
+      --nbg-ink-2:        #aebbc8;
       --nbg-muted:        #8b9aab;
       --nbg-muted-2:      #6b7a8c;
-      --nbg-border:       #243441;
-      --nbg-hairline:     #1c2b36;
+      --nbg-border:       #2a3b48;
+      --nbg-hairline:     #22323d;
       --nbg-accent:       var(--nbg-c-teal-400);
       --nbg-accent-ink:   #67e8f9;
       --nbg-accent-soft:  var(--nbg-c-teal-800);
-      --nbg-header-bg:    rgba(11, 20, 25, 0.85);
+      --nbg-header-bg:    rgba(16, 24, 31, 0.85);
       --nbg-shadow-md:    0 4px 18px -8px rgba(0, 0, 0, 0.55),
                           0 0 0 1px rgba(255, 255, 255, 0.04);
 
@@ -261,7 +270,7 @@
       --nbg-color-fg-primary:       var(--nbg-ink);
       --nbg-color-fg-secondary:     var(--nbg-ink-2);
       --nbg-color-fg-muted:         var(--nbg-muted);
-      --nbg-color-fg-on-accent:     var(--nbg-ink);
+      --nbg-color-fg-on-accent:     var(--nbg-bg);  /* mirror of explicit-dark fg-on-accent */
       --nbg-color-border-subtle:    var(--nbg-hairline);
       --nbg-color-border-default:   var(--nbg-border);
       --nbg-color-border-strong:    var(--nbg-muted);

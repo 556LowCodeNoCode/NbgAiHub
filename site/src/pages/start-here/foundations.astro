@@ -1021,10 +1021,12 @@ function resourceKindTone(kind: Resource['kind']): string {
        `.nbg-marketing a { color: inherit }` (class+element, specificity 0,1,1)
        beats our scoped class-only selector (0,1,0) and forces the link to
        inherit the parent's ink color. Without !important, the teal-bg CTA
-       renders dark-on-teal (illegible). */
+       renders with the wrong contrast. The token resolves to white in light
+       mode and to the dark canvas in dark mode (set on purpose 2026-06-09 —
+       white-on-teal reads as retina-flash in dark). */
     .foundation-next__cta--primary {
       background: var(--nbg-accent);
-      color: #ffffff !important;
+      color: var(--nbg-color-fg-on-accent, #ffffff) !important;
       border: 1px solid var(--nbg-accent);
     }
     .foundation-next__cta--primary:hover {

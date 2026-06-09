@@ -6,6 +6,23 @@ Per CLAUDE.md doc-hygiene: each entry ≤20 lines, structured as Decision (bulle
 
 ---
 
+## 2026-06-09 (afternoon) — Dark theme retuned: lift canvas, dim ink, flip on-accent text
+
+**Trigger:** User reported the dark theme felt burny — pure-black canvas (slate-950 `#0b1419`) + near-white ink (`#e6edf3`) at ~17:1 contrast, and every white-on-bright-teal CTA / filter pill / icon tile reading as a retina-flash against the dark page.
+
+**Decision:**
+- **Lift dark-mode canvas tokens:** `--nbg-bg` `#0b1419` → `#10181f`, `--nbg-bg-2` `#0f1c24` → `#152029`, `--nbg-surface` `#14232c` → `#1a2630`, `--nbg-surface-2` `#1a2d38` → `#20303c`, `--nbg-border` `#243441` → `#2a3b48`, `--nbg-hairline` `#1c2b36` → `#22323d`. Cards still float visibly above canvas; sits in Linear/Vercel comfortable-dark territory rather than OLED-pitch.
+- **Dim dark-mode ink:** `--nbg-ink` `#e6edf3` → `#d4dde6`, `--nbg-ink-2` `#c5d1dc` → `#aebbc8`. New contrast ~12:1 — still AAA.
+- **Flip `--nbg-color-fg-on-accent` in dark mode only:** `var(--nbg-ink)` (near-white) → `var(--nbg-bg)` (canvas-dark). White-on-mint reads as flash; dark-on-mint reads as Linear/Stripe "premium primary." Light mode unchanged — still `#ffffff` on accent (standard bright-page CTA contrast).
+- **Swap 17 hardcoded `color: #ffffff` → `color: var(--nbg-color-fg-on-accent, #ffffff)`** across: `index.astro` (primary CTA + compass icon tile), `AudienceFilter`, `TopicFilter`, `PinButton` pressed, `SignInModal` (×7), `listing-rows.css` (filter-bar pressed-chip + empty-state hover), `use-cases/[slug]` (OS toggle + next-CTA), `use-cases/index`, `tips/[slug]`, `skills/[slug]` (step number + next-CTA), `start-here/day-1` next-CTA, `start-here/foundations` next-CTA. `Toast` (translucent-white-on-toast) + `TerminalDemo` (terminal mock) + `listing-row__cmd-code` (white on deep teal-900) deliberately left alone — those whites aren't on the bright accent.
+- Both `:root[data-theme='dark']` and `@media (prefers-color-scheme: dark)` blocks updated in sync.
+
+**Why:** the OLED-black + bright-white-accent combo was actively painful. Token-level changes + 17 surgical hardcode swaps preserve the aesthetic; same DOM serves both themes without per-mode branching at the call site.
+
+**Refs:** `site/src/styles/tokens/semantic.css` (2 blocks) + 12 component/page files. Verified via headless Chrome screenshots at 1400×900 in dark mode.
+
+---
+
 ## 2026-06-09 (later) — Use-case OS toggle stays 2-way; WSL framing strengthened on day-1
 
 **Trigger:** User asked whether the Mac/Windows toggle on use cases should fork shell commands too (PowerShell vs WSL), not just terminal-launch wording.

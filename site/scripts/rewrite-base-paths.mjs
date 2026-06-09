@@ -28,6 +28,12 @@ if (!BASE) {
 
 // Known top-level routes — the only paths we rewrite. Anything not on this
 // list is either an asset (handled by Astro) or an external link.
+//
+// IMPORTANT — when adding a new top-level pillar / route, add its slug
+// here. Skip this and the deployed site will 404 on any `<a href="/xxx/">`
+// link to it from the topnav, sidebar, or other authored content.
+// Symptom: local build works, production deploy 404s at
+// `https://556lowcodenocode.github.io/<route>/` (missing /NbgAiHub/ prefix).
 const ROUTES = [
   'glossary',
   'skills',

@@ -6,6 +6,22 @@ Per CLAUDE.md doc-hygiene: each entry ≤20 lines, structured as Decision (bulle
 
 ---
 
+## 2026-06-09 (very late) — base-path allowlist trap on new pillars
+
+**Trigger:** User hit a 404 visiting `https://556lowcodenocode.github.io/newsletter/` right after the newsletter pillar deploy.
+
+**Root cause:** `site/scripts/rewrite-base-paths.mjs` postbuild step prefixes hardcoded `<a href="/route/">` attributes with `/NbgAiHub` — but only for slugs listed in its `ROUTES` allowlist. The newsletter pillar shipped without `newsletter` in that list, so the topnav link rendered as `href="/newsletter/"` on deploy and 404'd at the org root (no GitHub Pages site exists at `556lowcodenocode.github.io/newsletter/`).
+
+**Decision:**
+- Add `newsletter` to `ROUTES` in `rewrite-base-paths.mjs` (one-line fix, commit `9ad7d66`).
+- Add a `// IMPORTANT — when adding a new top-level pillar…` block-comment inside the script so the next person adding a pillar sees the requirement before clicking deploy.
+
+**Why:** the script's existing top-of-file comment explained *what* it does but not *what to do when adding a new route*. Local build worked because the postbuild script no-ops when `PUBLIC_BASE` is unset — the trap only surfaces in production. Inline reminder is cheaper than a separate doc nobody reads.
+
+**Refs:** `site/scripts/rewrite-base-paths.mjs` — added `newsletter` to ROUTES + reminder comment block. Build clean.
+
+---
+
 ## 2026-06-09 — Newsletter pillar + topnav tightening
 
 **Trigger:** User asked to add a "Newsletter" section for periodic internal dispatches, with a repeatable drop-and-go authoring process. Same session uncovered the topnav was visually cramped (9 section links + 3 action controls), and refining the newsletter listing surfaced follow-ons (item card aesthetic, hero text triggering glossary popover, iframe scrollbar).

@@ -6,6 +6,24 @@ Per CLAUDE.md doc-hygiene: each entry ≤20 lines, structured as Decision (bulle
 
 ---
 
+## 2026-06-09 (later) — Use-case OS toggle stays 2-way; WSL framing strengthened on day-1
+
+**Trigger:** User asked whether the Mac/Windows toggle on use cases should fork shell commands too (PowerShell vs WSL), not just terminal-launch wording.
+
+**Decision:**
+- Keep the toggle **2-way** (Mac / Windows). Do not add a PowerShell branch.
+- Windows readers are committed to WSL by day-1; from that point on they are running Linux, and `mkdir`, `cd`, `~/Desktop/foo`, `cp`, `gh`, `claude` work identically to Mac.
+- Strengthened day-1's Windows section with an explicit "from here forward, every command assumes Ubuntu/WSL" paragraph that also explains *why* the use-case toggle's commands look identical between branches (only terminal-launch and open-in-file-manager genuinely differ).
+- Tightened the "On native Windows (no WSL)" install path to read as a read-along fallback for WSL-blocked machines, not a parallel supported route.
+
+**Why:** PowerShell aliases `mkdir`/`cd`/`cp`/`ls`/`~`, so a third branch would mostly duplicate identical content. Claude Code's officially-supported Windows path is WSL — non-WSL has rough edges around TTY, MCP servers, and `--dangerously-skip-permissions`. Cost (12 use cases × every shell block × QA on a third platform) far exceeds the ergonomic payoff.
+
+**Trigger to revisit:** if multiple bank colleagues report WSL is blocked by IT and can't be enabled — then a real 3-state toggle becomes a "can use the hub at all" question.
+
+**Refs:** `journeys/day-1.md` Step 1 (new paragraph at end of Windows section) + Step 2 ("On native Windows (no WSL)" tightened).
+
+---
+
 ## 2026-06-09 (very late) — base-path allowlist trap on new pillars
 
 **Trigger:** User hit a 404 visiting `https://556lowcodenocode.github.io/newsletter/` right after the newsletter pillar deploy.

@@ -5,7 +5,7 @@ audience: beginner
 topics: [onboarding, getting-started]
 internal: false
 authored: "2026-05-19"
-last_reviewed: "2026-05-27"
+last_reviewed: "2026-06-09"
 external_link: null
 deeper_link: null
 ai_summary: A six-step walkthrough for someone who just got Claude Code access — terminal, install, GitHub account, first session, control keys, CLAUDE.md. Designed to be done in about an hour.
@@ -68,6 +68,8 @@ Full Microsoft instructions, including the manual install path for older Windows
 
 If none of those help, the [Microsoft WSL troubleshooting guide](https://learn.microsoft.com/en-us/windows/wsl/troubleshooting) covers the long tail — most exotic errors have a known fix documented there.
 
+**One thing to internalise before you move on.** From here forward, every command in this hub — `mkdir`, `cd`, `~/Desktop/foo`, `cp`, `gh`, `claude` — assumes you're typing it **inside Ubuntu/WSL**, not in PowerShell or Command Prompt. The use cases later will say things like `mkdir ~/Desktop/replies-today`. That's Linux syntax. Open the Ubuntu window, type it literally, and it just works. If you ever wonder "is this for me?" because you're on a Windows laptop — yes, it's for you. You're on Linux now, via WSL. The Mac/Windows toggle you'll see on each use case page only diverges in two spots — *how to open a terminal* and *how to open a folder in the file manager* — because those are the only places the two operating systems genuinely differ. The commands in between are the same.
+
 ---
 
 ## Step 2 — Install Claude Code
@@ -99,7 +101,9 @@ npm install -g @anthropic-ai/claude-code
 
 ### On native Windows (no WSL)
 
-This is the less-recommended path. If you can use WSL, use it. If you can't, install [Node.js LTS](https://nodejs.org/en/download) via the official installer (or via [`winget install OpenJS.NodeJS.LTS`](https://learn.microsoft.com/en-us/windows/package-manager/winget/) in PowerShell), then:
+This is a read-along fallback for the rare case where WSL is genuinely blocked on your machine. Claude Code will launch from PowerShell, but the rest of this hub — every use case, every example — assumes Ubuntu/WSL syntax. You'll be translating `~/Desktop/foo` to `$env:USERPROFILE\Desktop\foo` and bumping into rough edges around quoting, MCP servers, and a few CLI flags. Most colleagues who start here end up installing WSL within a week. **If you can use WSL, use it.**
+
+If you really can't, install [Node.js LTS](https://nodejs.org/en/download) via the official installer (or via [`winget install OpenJS.NodeJS.LTS`](https://learn.microsoft.com/en-us/windows/package-manager/winget/) in PowerShell), then:
 
 ```
 npm install -g @anthropic-ai/claude-code

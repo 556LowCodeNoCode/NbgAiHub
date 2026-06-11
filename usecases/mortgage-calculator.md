@@ -5,15 +5,15 @@ audience: beginner
 topics: [mortgages, build, html]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
-ai_summary: A single HTML file with three sliders (income, debts, interest rate) that shows the maximum mortgage amount as you move them. Built in thirty minutes by describing the rules in plain English. You don't write a line of code yourself.
+ai_summary: A single HTML file with four sliders (income, debts, property value, interest rate) that shows the maximum mortgage amount as you move them. Built in thirty minutes by describing the rules in plain English. You don't write a line of code yourself.
 business_unit: mortgages
 time_estimate: "~30 min"
 difficulty: beginner
 order: 4
-outcome: A single self-contained `index.html` file you can open in any browser — three sliders, a live result, ready to share with a colleague or screen-share on a call.
+outcome: A single self-contained `index.html` file you can open in any browser — four sliders, a live result with the binding constraint named, ready to share with a colleague or screen-share on a call.
 inputs:
   - The eligibility rules you want to encode (in plain English, one bullet per rule — Claude will help you turn them into code)
   - Claude Code installed and a terminal open (see Day 1)
@@ -51,15 +51,15 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each command and press Enter.
 
 ```
-mkdir ~/Desktop/mortgage-calc
-cd ~/Desktop/mortgage-calc
+mkdir -p ~/Desktop/claude-lab/mortgage-calc
+cd ~/Desktop/claude-lab/mortgage-calc
 claude --dangerously-skip-permissions
 ```
 
 Plain-English translation:
 
-- `mkdir ~/Desktop/mortgage-calc` — make a folder called `mortgage-calc` on your Desktop.
-- `cd ~/Desktop/mortgage-calc` — move into the folder.
+- `mkdir -p ~/Desktop/claude-lab/mortgage-calc` — make a folder called `mortgage-calc` inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/mortgage-calc` — move into the folder.
 - `claude --dangerously-skip-permissions` — start Claude Code here. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The blinking cursor is now Claude's. You're chatting with it.
@@ -130,13 +130,13 @@ If that doesn't work, open the file by hand:
 
 <div data-os="mac">
 
-Open Finder → click "Desktop" in the sidebar → double-click the `mortgage-calc` folder → double-click `index.html`. It opens in your default browser.
+Open Finder → click "Desktop" in the sidebar → open `claude-lab`, then the `mortgage-calc` folder → double-click `index.html`. It opens in your default browser.
 
 </div>
 
 <div data-os="windows">
 
-Open File Explorer → click "Desktop" in the sidebar → double-click `mortgage-calc` → double-click `index.html`. It opens in your default browser.
+Open File Explorer → click "Desktop" in the sidebar → open `claude-lab`, then `mortgage-calc` → double-click `index.html`. It opens in your default browser.
 
 </div>
 
@@ -160,6 +160,18 @@ Each follow-up is one prompt. Claude edits the same `index.html`. Refresh the br
 
 This loop is the actual skill — and it's the same loop a senior developer runs, only faster because they don't type the code.
 
+### Make Claude prove the maths
+
+A calculator that *looks* right and a calculator that *is* right are different things. Before you email it to anyone, paste:
+
+> Prove the calculator's maths. Pick these inputs: income €40,000, existing debts €300/month, property €250,000, rate 3.5%. Compute all three caps by hand, step by step, showing the arithmetic — including the 25-year annuity formula for the debt-to-income cap. Then read the formula in `index.html` and confirm it produces the same number and names the same binding constraint. If they disagree, find the bug and fix it.
+
+And for the *visual* side, Claude can check its own work too:
+
+> Take a screenshot of `index.html` in a headless browser and look at it. Is anything overlapping, cut off, or unreadable? Fix what you find and screenshot again.
+
+Claude can drive a browser, look at the pixels, and iterate — you don't have to be the only QA in the loop.
+
 Once you're happy, email `index.html` to a colleague — they double-click and it opens in their browser. If you want to share it more broadly, that's where your manager + risk team come in. The prototype earns the conversation.
 
 Half an hour. Six prompts. A working interactive tool that your colleagues can actually use. You didn't write a single line of code.
@@ -172,4 +184,18 @@ You'll come back to this folder. A risk officer will ask "can we add a second-bo
 mv rules.md CLAUDE.md
 ```
 
-`CLAUDE.md` is the magic filename Claude Code reads automatically every time it starts in this folder. Next time you `cd ~/Desktop/mortgage-calc && claude --dangerously-skip-permissions`, Claude already knows the eligibility rules, the input fields, the NBG-ish styling — you can jump straight to *"add a second-borrower column"* without re-briefing.
+`CLAUDE.md` is the magic filename Claude Code reads automatically every time it starts in this folder. Next time you `cd ~/Desktop/claude-lab/mortgage-calc && claude --dangerously-skip-permissions`, Claude already knows the eligibility rules, the input fields, the NBG-ish styling — you can jump straight to *"add a second-borrower column"* without re-briefing.
+
+---
+
+## Step 6 — Level up — charts and a reverse gear
+
+This use case is already interactive, so its level-up is about going from *calculator* to *conversation tool*. Two prompts, pick either or both:
+
+> Add an amortisation chart under the result: monthly payment split into interest and principal over the 25 years, drawn on a `<canvas>` — still no external libraries, still one file. When a slider moves, the chart redraws.
+
+> Add a "reverse mode" toggle: instead of income → max mortgage, the user enters the mortgage they want and the calculator shows the annual income that would be needed, holding the other inputs. Show which constraint drives the answer, same as forward mode.
+
+Reverse mode is the one that changes meetings: a customer asks *"what would I need to earn for a €200k loan?"* and the answer is one slider away instead of "let me get back to you".
+
+**The pattern to remember** — you built this by describing rules in plain English, and you extended it the same way. Any tool you can describe, Claude can build into a single double-clickable file. Start simple, iterate by talking.

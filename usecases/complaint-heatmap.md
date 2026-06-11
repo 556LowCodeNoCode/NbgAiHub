@@ -5,7 +5,7 @@ audience: beginner
 topics: [analysis, contact-center, reporting]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: You ask Claude to invent a realistic complaints CSV (so the use case works without any system access), then a few minutes later you have a one-page markdown report showing the top five themes, how often each appears, and one verbatim quote per theme. Repeatable every Monday on real data once you have it.
@@ -51,15 +51,15 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 You'll see a prompt — the blinking cursor is waiting for you. Type each line below and press Enter after each one.
 
 ```
-mkdir ~/Desktop/complaint-heatmap
-cd ~/Desktop/complaint-heatmap
+mkdir -p ~/Desktop/claude-lab/complaint-heatmap
+cd ~/Desktop/claude-lab/complaint-heatmap
 claude --dangerously-skip-permissions
 ```
 
 Plain-English translation:
 
-- `mkdir ~/Desktop/complaint-heatmap` — **m**a**k**e a new **dir**ectory (folder) called `complaint-heatmap` on your Desktop. You'll see it appear in Finder / File Explorer.
-- `cd ~/Desktop/complaint-heatmap` — **c**hange **d**irectory: move the terminal *into* that folder, so any command you type next runs there.
+- `mkdir -p ~/Desktop/claude-lab/complaint-heatmap` — **m**a**k**e a new **dir**ectory (folder) called `complaint-heatmap` inside a parent folder called `claude-lab` on your Desktop. The `-p` flag creates `claude-lab` too if it doesn't exist yet. Every use case in this hub lives under `claude-lab/` — one tidy home instead of a Desktop scattered with experiment folders.
+- `cd ~/Desktop/claude-lab/complaint-heatmap` — **c**hange **d**irectory: move the terminal *into* that folder, so any command you type next runs there.
 - `claude --dangerously-skip-permissions` — start Claude Code in this folder. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one where there's nothing it can damage. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The blinking cursor is now Claude's. You're chatting with it.
@@ -72,7 +72,7 @@ You don't have a real export, and you don't need one. Tell Claude:
 
 > Create a file called `complaints.csv` in this folder. Generate 40 realistic synthetic complaints a Greek retail-bank contact centre might receive in a week. Columns: `date,channel,text`.
 >
-> - Dates between `2026-05-19` and `2026-05-25`.
+> - Dates between `2026-05-18` and `2026-05-24` (that's a Monday-to-Sunday week).
 > - `channel` is one of `phone`, `email`, `chat`.
 > - The `text` column should be the customer's verbatim message — anywhere from 8 to 60 words. Mix tone: some calm, some annoyed, some confused.
 > - Cluster the complaints around realistic recurring themes: duplicate card charges, mobile app login failures, ATM cash-out errors, mortgage statement queries, branch wait times, SMS-OTP delays. Make some themes more common than others (life is uneven). Don't make every row a different theme — that's not what real complaint data looks like.
@@ -100,7 +100,7 @@ Paste this prompt verbatim the first time. Tweak it next week once you know what
 >
 > Output a markdown file `heatmap-report.md` formatted as a one-pager I can paste into Teams. Lead with the headline number: "X complaints across Y themes this week." Order themes by count, highest first.
 
-Press Enter. Claude reads the file, does the clustering, and asks for permission before it writes anything. When it asks "Create `heatmap-report.md`?" — say yes. It takes 30–90 seconds.
+Press Enter. Claude reads the file, does the clustering, and writes `heatmap-report.md` straight into the folder — no permission prompt, because of the flag from Step 1. (If you started with plain `claude` instead, it asks "Create `heatmap-report.md`?" first — say yes.) It takes 30–90 seconds.
 
 ---
 
@@ -117,6 +117,14 @@ Three things to check:
 3. **Are the verbatim quotes actually verbatim?** Cross-check one or two against the CSV. If Claude is paraphrasing, tell it *"quotes must be exact strings copied from the `text` column"* and rerun.
 
 This review *is* the work. Five minutes here saves you from sending a wrong-looking briefing.
+
+### Don't check it by hand — make Claude prove it
+
+Checks 2 and 3 above are mechanical, and mechanical checking is exactly what you should delegate. Paste:
+
+> Verify your own report. (1) Every quote in `heatmap-report.md` must appear as an **exact substring** of the `text` column in `complaints.csv` — check each one with `grep` and show me the output. (2) The per-theme counts must sum to the CSV's row count. (3) Recompute every percentage. If any check fails, fix the report and re-run all three checks.
+
+Claude runs real commands against the real files — `grep` either finds the quote or it doesn't; there's no "looks fine to me" in the loop. This habit — **make the model prove its own output with commands, not assurances** — is the single most useful verification trick in this hub. It works on every use case here, and it's what turns "I think the AI got it right" into "here's the command output that shows it did."
 
 ---
 
@@ -137,8 +145,8 @@ Tell Claude:
 
 Claude writes the file. Next Monday's workflow shrinks to:
 
-1. Drop a fresh `complaints.csv` into a new folder.
-2. `cp ~/Desktop/complaint-heatmap/CLAUDE.md ~/Desktop/heatmap-2026-06-04/` — the rules travel with you.
+1. Drop a fresh `complaints.csv` into a new folder under `claude-lab/`.
+2. `cp ~/Desktop/claude-lab/complaint-heatmap/CLAUDE.md ~/Desktop/claude-lab/heatmap-2026-06-04/` — the rules travel with you.
 3. `cd` into the new folder and run `claude --dangerously-skip-permissions`.
 4. Type one line: *"do the heatmap"*. Claude knows the rest because it already read `CLAUDE.md`.
 
@@ -155,3 +163,23 @@ A short, sane starting `~/.claude/CLAUDE.md` for a banking colleague might be:
 > - When you're unsure about a regulatory interpretation, write "needs legal interpretation" instead of guessing.
 
 Two minutes of work, useful in every future session. Don't bloat it — one or two lines per rule is plenty.
+
+---
+
+## Step 6 — Level up — turn the report into an interactive heatmap
+
+The markdown one-pager is Level 1. Here's the jump that makes Monday's meeting sit up: the same data as a clickable dashboard, built by one paragraph of prompt.
+
+> Read `complaints.csv` and build a single self-contained file called `dashboard.html` that I can open by double-clicking — no server, no internet connection, no external libraries. It should show:
+>
+> - Stat cards across the top: total complaints, number of themes, number of channels, busiest theme.
+> - A heatmap grid — themes as rows, days as columns, the count in each cell, darker background = more complaints. Compute the weekday labels from the actual dates; don't assume the range starts on a Monday.
+> - Click any cell to list the verbatim complaints behind it underneath the grid, with date and channel.
+>
+> Use the same theme clustering as `heatmap-report.md`, and the accent colour `#007a8a`.
+
+Claude writes one HTML file. Double-click it in Finder / File Explorer — it opens in your browser, works offline, and you can attach it to an email or drop it in Teams like any other file.
+
+If something looks wrong, describe what you see ("the column labels overlap on my laptop") and let Claude fix it — or go one better and ask: *"take a screenshot of the page yourself and check the layout"*. Claude can drive a headless browser, look at the result, and iterate without you in the loop.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* That sentence works on every use case in this hub.

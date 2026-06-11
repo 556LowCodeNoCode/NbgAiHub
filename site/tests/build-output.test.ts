@@ -172,9 +172,11 @@ describe('Token foundation present (AC1, AC4)', () => {
     // Check for @layer declaration
     expect(content, '@layer declaration present').toContain('@layer');
 
-    // Check for all 8 layers in order
+    // Check for all 9 layers in order (starlight.reset added 2026-06-08,
+    // commit eb82d6c — search modal centering fix)
     const expectedLayers = [
       'reset',
+      'starlight.reset',
       'tokens',
       'starlight.base',
       'starlight.core',
@@ -189,13 +191,13 @@ describe('Token foundation present (AC1, AC4)', () => {
     }
 
     // Verify order: extract the @layer declaration line (not multi-line comments)
-    // Match: @layer reset, tokens, starlight.base, ...;
+    // Match: @layer reset, starlight.reset, tokens, ...;
     const layerMatch = content.match(/@layer\s+([\w.,\s]+);/);
     expect(layerMatch, '@layer declaration found').not.toBeNull();
 
     const layers = layerMatch![1]!.split(',').map((l) => l.trim());
 
-    expect(layers, '8 layers declared in order').toEqual(expectedLayers);
+    expect(layers, '9 layers declared in order').toEqual(expectedLayers);
   });
 
   it('semantic.css contains both dark and light theme blocks', () => {

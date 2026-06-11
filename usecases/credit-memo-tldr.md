@@ -5,7 +5,7 @@ audience: beginner
 topics: [risk, credit, summarisation]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: A relationship manager hands you a fifteen-page credit memo and the committee meets in an hour. Claude reads it and produces a three-bullet exec summary plus a risk-flag list — the structured starting point your senior credit officer actually wants, not a paraphrase of the whole memo.
@@ -49,13 +49,13 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Then:
 
 ```
-mkdir ~/Desktop/credit-memo-review
-cd ~/Desktop/credit-memo-review
+mkdir -p ~/Desktop/claude-lab/credit-memo-review
+cd ~/Desktop/claude-lab/credit-memo-review
 claude --dangerously-skip-permissions
 ```
 
-- `mkdir ~/Desktop/credit-memo-review` — make a fresh folder on your Desktop.
-- `cd ~/Desktop/credit-memo-review` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/credit-memo-review` — make a fresh folder inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/credit-memo-review` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code here. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 ---
@@ -64,7 +64,7 @@ claude --dangerously-skip-permissions
 
 You don't have a real memo to hand and you don't need one. Tell Claude:
 
-> Create a file called `source.md` in this folder. Write a realistic synthetic credit memo for a fictional Greek SME, ~15 pages of markdown (about 4500 words). Use page-break markers like `<!-- page 2 -->` after every ~300 words so we can cite "page X" later.
+> Create a file called `source.md` in this folder. Write a realistic synthetic credit memo for a fictional Greek SME — long enough to feel like a real fifteen-pager, but what matters is the structure and the planted tensions below, not the word count. Use page-break markers like `<!-- page 2 -->` every few hundred words so we can cite "page X" later.
 >
 > Borrower: **Aegean Solar A.E.** — a 12-year-old Greek SME installing residential and commercial solar PV systems, based in Thessaloniki, ~85 employees, annual revenue ~€18M.
 >
@@ -151,6 +151,14 @@ If any citation doesn't match, tell Claude:
 
 Iterate until all three spot-checks pass. The brief is now a starting point your senior officer can trust enough to argue with.
 
+### Then make Claude audit every citation, not just your three
+
+Your random checks calibrate trust; the full sweep is Claude's job. Paste:
+
+> Audit your own brief. For every row of the risk-flags table and every "numbers" bullet: locate the cited page block in `source.md`, verify the evidence quote appears there verbatim (use `grep -F` and show me the output), and mark the row ✓ or ✗. Every ✗ gets fixed — re-extract the quote, correct the page, or downgrade the severity — then re-run the audit until the table is all ✓.
+
+A risk flag that can't produce its evidence quote on demand isn't a flag, it's a hunch. This audit is what makes the difference between "the AI said so" and "page 7, second paragraph, here's the line" when the committee pushes back.
+
 ---
 
 ## Step 6 — Add a one-line recommendation and ship
@@ -184,7 +192,19 @@ mv context.md CLAUDE.md
 `CLAUDE.md` is the magic filename Claude Code reads automatically every time you start `claude` in a folder containing it. Next memo:
 
 1. New folder, drop in `source.md`
-2. `cp ~/Desktop/credit-memo-review/CLAUDE.md .` — your risk-flag thresholds, reader profile, and brief structure all travel with you
+2. `cp ~/Desktop/claude-lab/credit-memo-review/CLAUDE.md .` — your risk-flag thresholds, reader profile, and brief structure all travel with you
 3. `claude --dangerously-skip-permissions` and one line: *"produce the brief from source.md"*
 
 Claude already knows what counts as HIGH/MED/LOW severity from `CLAUDE.md`. The brief lands consistent across memos — which means your senior credit officer learns to trust the format, and you stop arguing about whether something is "really" a flag.
+
+---
+
+## Step 7 — Level up — a committee card with traffic lights
+
+Optional: the same brief as a single screen the committee can absorb in ten seconds. One prompt:
+
+> Read `brief.md`. Build a single self-contained file `committee-card.html` that I can open by double-clicking — no server, no internet, no external libraries. One screen: borrower, ask, and my recommendation across the top; the three exec-summary bullets; then the risk flags as traffic-light cards — red for HIGH, amber for MED, green for LOW — where clicking a card reveals the evidence quote and page citation. Open questions for the RM as a checklist at the bottom so I can tick them off live in the meeting. Include a print stylesheet so it prints cleanly on one A4 page. Accent colour `#007a8a`.
+
+Screen-share it at committee, click a red card when challenged, and the verbatim evidence is right there with its page number. The checklist at the bottom turns "did we ask the RM about the projections?" into a box that's either ticked or not.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.

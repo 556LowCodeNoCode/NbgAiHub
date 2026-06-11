@@ -467,14 +467,16 @@ const DEMO_VIDEO = `${import.meta.env.BASE_URL}demo/claude-session.mp4`.replace(
   }
 
   .router-card__cta--primary {
-    background: var(--nbg-accent);
-    color: var(--nbg-color-fg-on-accent);
-    border: 1px solid var(--nbg-accent);
+    background: var(--nbg-accent) !important;
+    /* !important per starlight-cascade-gotcha.md — Starlight's unlayered
+       `a { color }` rule beats layered rules in production builds. */
+    color: var(--nbg-color-fg-on-accent) !important;
+    border: 1px solid var(--nbg-accent) !important;
   }
 
   .router-card__cta--primary:hover {
-    background: var(--nbg-accent-ink);
-    border-color: var(--nbg-accent-ink);
+    background: var(--nbg-accent-ink) !important;
+    border-color: var(--nbg-accent-ink) !important;
   }
 
   .router-card__cta--secondary {

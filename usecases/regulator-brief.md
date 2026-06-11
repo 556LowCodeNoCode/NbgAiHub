@@ -5,7 +5,7 @@ audience: beginner
 topics: [compliance, summarisation, regulation]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: A new ECB / BoG / EBA paper lands in your inbox. It is 60 pages, half of it is boilerplate, the deadline is Friday. Claude reads it and writes a one-pager — what changed, who's affected, what we need to do, by when — that you can take to your team lead.
@@ -49,13 +49,13 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line:
 
 ```
-mkdir ~/Desktop/reg-brief-eba
-cd ~/Desktop/reg-brief-eba
+mkdir -p ~/Desktop/claude-lab/reg-brief-eba
+cd ~/Desktop/claude-lab/reg-brief-eba
 claude --dangerously-skip-permissions
 ```
 
-- `mkdir ~/Desktop/reg-brief-eba` — make a folder on your Desktop.
-- `cd ~/Desktop/reg-brief-eba` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/reg-brief-eba` — make a folder inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/reg-brief-eba` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code here. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 ---
@@ -64,7 +64,7 @@ claude --dangerously-skip-permissions
 
 You don't have a real ECB or EBA paper to hand and you don't need one. Tell Claude:
 
-> Create a file called `source.md` in this folder. Write a realistic synthetic regulator consultation paper, about 10 pages worth of markdown (~3000 words). Topic: "Consultation Paper EBA/CP/2026/04 — Strengthening underwriting standards for residential mortgages in the Single Market".
+> Create a file called `source.md` in this folder. Write a realistic synthetic regulator consultation paper — long enough to feel like the real thing, but what matters is the structure and the planted substance below, not the word count. Topic: "Consultation Paper EBA/CP/2026/04 — Strengthening underwriting standards for residential mortgages in the Single Market".
 >
 > Structure with numbered sections — use §1, §2, §3, §4, §5, §6, §7 and subsections like §4.2.1:
 >
@@ -137,7 +137,7 @@ Ask Claude to show you what it wrote:
 Pick three bullets at random. For each one:
 
 1. Note the section number Claude cited.
-2. Open `source.md` (it's in your `~/Desktop/reg-brief-eba/` folder — open it in your text editor or just ask Claude *"show me §4.1 of source.md"*), jump to that section.
+2. Open `source.md` (it's in your `~/Desktop/claude-lab/reg-brief-eba/` folder — open it in your text editor or just ask Claude *"show me §4.1 of source.md"*), jump to that section.
 3. Confirm the bullet accurately reflects what's there.
 
 If two of three pass, you have a solid brief. If one fails, ask Claude to recheck — naming the bullet that was wrong is enough:
@@ -145,6 +145,14 @@ If two of three pass, you have a solid brief. If one fails, ask Claude to rechec
 > The "Who's affected" bullet about SME unsecured lending — recheck against §4.1 of `source.md`. I don't see that there.
 
 Iterate until your spot-checks pass.
+
+### Then make Claude audit the whole brief, not just your three
+
+Your three random checks calibrate trust; Claude can do the full sweep. Paste:
+
+> Audit your own brief. For every bullet in `brief.md`, quote the exact sentence(s) from `source.md` at the cited section that support it, and mark the bullet ✓ or ✗. A bullet with no supporting sentence is ✗ — fix it or delete it, then re-run the audit until everything is ✓. Show me the full audit table.
+
+This inverts the usual dynamic: instead of you searching the paper to verify the summary, the summary has to come with its evidence attached. Any bullet that can't produce a quote was never trustworthy enough to put in front of the head of compliance.
 
 ---
 
@@ -169,3 +177,15 @@ mv context.md CLAUDE.md
 > Produce `brief.md` from `source.md` in the format you already know.
 
 Claude already loaded your reader profile and the four-section template from `CLAUDE.md`. You just point at the new paper and get the brief.
+
+---
+
+## Step 7 — Level up — put the deadlines on a timeline
+
+"By when" as bullets is correct; "by when" as a picture is what gets a budget approved. One prompt:
+
+> Read `brief.md` and `source.md`. Build a single self-contained file `deadlines.html` that I can open by double-clicking — no server, no internet, no external libraries. A horizontal timeline from today to the last date in the paper, with a dot for every deadline (consultation close, publication, effective dates, transition windows). Clicking a dot shows what's due, who in the bank it touches, and the §-citation. Mark today with a vertical line. Accent colour `#007a8a`.
+
+Double-click it before the team meeting and screen-share. The gap between "consultation closes in August" and "supervisory expectation effective July 2027" stops being prose and becomes distance on a line — which is how everyone suddenly agrees on what's urgent.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.

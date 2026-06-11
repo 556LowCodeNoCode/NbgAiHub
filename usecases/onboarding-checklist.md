@@ -5,7 +5,7 @@ audience: beginner
 topics: [hr, onboarding, writing]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: A new joiner starts Monday. HR sends them a generic 40-item checklist that scares everyone. Claude reads the job description, the team's standard onboarding doc, and the new joiner's CV — then produces a tailored 12-item week-one plan they can actually finish.
@@ -49,13 +49,13 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line:
 
 ```
-mkdir ~/Desktop/onboarding-anna
-cd ~/Desktop/onboarding-anna
+mkdir -p ~/Desktop/claude-lab/onboarding-anna
+cd ~/Desktop/claude-lab/onboarding-anna
 claude --dangerously-skip-permissions
 ```
 
-- `mkdir ~/Desktop/onboarding-anna` — make a folder named after the joiner.
-- `cd ~/Desktop/onboarding-anna` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/onboarding-anna` — make a folder named after the joiner, inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/onboarding-anna` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 ---
@@ -142,6 +142,14 @@ Read it twice — once as you, once as Anna. Questions to ask yourself:
 
 Iterate. Three of these revisions usually produce a checklist that lands well.
 
+### Make Claude prove it followed its own rules
+
+The judgment calls above are yours; the rule-compliance is Claude's to demonstrate. Paste:
+
+> Verify your own checklist. (1) Count the items per section and show me the counts — the caps are 4 / 5 / 4. (2) Go through `team-onboarding.md` item by item and produce three lists: kept, skipped-as-irrelevant-to-the-role, skipped-as-redundant-with-the-CV — and for every "redundant" skip, quote the CV line that justifies it. (3) Confirm every checklist item has all three parts: who, where, why. Fix anything that fails and re-run.
+
+List 2 is the one worth reading: it shows you exactly what Claude decided *not* to include and why — which is where personalisation either happened or didn't. A wrongly-skipped mandatory training is the failure mode that matters here, and this check surfaces it.
+
 ---
 
 ## Step 6 — How you'd actually deliver it
@@ -167,3 +175,15 @@ The rules you established this time are stable — they apply to *every* SME Cre
 > - Every item needs a *why*
 
 `CLAUDE.md` is the magic filename Claude Code reads automatically every time you start `claude` in a folder containing it. Next joiner: copy the CLAUDE.md and the team-onboarding doc into a new folder, drop in the new joiner's CV, write a one-line `context.md` with name and prior experience, run `claude --dangerously-skip-permissions`. Five minutes.
+
+---
+
+## Step 7 — Level up — a checklist the joiner actually ticks off
+
+Optional, and the version that changes who the document is *for*: not a list the manager sends, but a page the joiner uses all week. One prompt:
+
+> Read `week-one-checklist.md`. Build a single self-contained file `anna-week-one.html` that I can open by double-clicking — no server, no internet, no external libraries. The three sections (Day 1 · Days 2–3 · Days 4–5) with a real checkbox per item that **remembers its state** when the page is closed and reopened (use the browser's local storage). A progress bar at the top ("5 of 13 done — nice pace"). Each item shows the who / where / why. Tone friendly, not corporate. Accent colour `#007a8a`.
+
+Email the file to Anna before Monday. She double-clicks it, ticks things off through the week, and the progress bar does the encouragement. The state lives in her browser — nothing is sent anywhere, no account, no app.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.

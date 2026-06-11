@@ -563,9 +563,11 @@ const isInternal = entry.data.origin === 'internal';
       font-size: 0.9rem;
     }
     .skill-next__cta--primary {
-      background: var(--nbg-accent, #007a8a);
-      color: var(--nbg-color-fg-on-accent, #ffffff);
-      border: 1px solid var(--nbg-accent, #007a8a);
+      background: var(--nbg-accent, #007a8a) !important;
+      /* !important per starlight-cascade-gotcha.md — Starlight's unlayered
+         `a { color }` rule beats layered rules in production builds. */
+      color: var(--nbg-color-fg-on-accent, #ffffff) !important;
+      border: 1px solid var(--nbg-accent, #007a8a) !important;
     }
     .skill-next__cta--primary:hover { filter: brightness(1.06); }
     .skill-next__cta--secondary {

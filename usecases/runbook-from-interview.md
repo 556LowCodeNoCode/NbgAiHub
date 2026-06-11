@@ -5,7 +5,7 @@ audience: beginner
 topics: [process-improvement, documentation, knowledge-sharing]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: Someone on the team is the only person who knows how the month-end reconciliation actually works. They're going on holiday. Interview them on Teams (recorded transcript), then ask Claude to turn that transcript into a step-by-step runbook anyone on the team could follow.
@@ -57,13 +57,13 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line:
 
 ```
-mkdir ~/Desktop/runbook-monthend-recon
-cd ~/Desktop/runbook-monthend-recon
+mkdir -p ~/Desktop/claude-lab/runbook-monthend-recon
+cd ~/Desktop/claude-lab/runbook-monthend-recon
 claude --dangerously-skip-permissions
 ```
 
-- `mkdir ~/Desktop/runbook-monthend-recon` — make a folder named after the process.
-- `cd ~/Desktop/runbook-monthend-recon` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/runbook-monthend-recon` — make a folder named after the process, inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/runbook-monthend-recon` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 ---
@@ -143,6 +143,14 @@ Send this to Claude:
 
 Press Enter. A 30-minute interview transcript takes 60–120 seconds to process.
 
+### Make Claude prove nothing fell through the cracks
+
+Before the colleague spends their time reviewing, make Claude audit its own coverage. Paste:
+
+> Audit `runbook.md` against `transcript.md`. (1) List every "I usually" / "I tend to" moment in the transcript and show me, side by side, where each one became an explicit decision point in the runbook — quote both. (2) Confirm the errors table contains exactly the errors the transcript mentions — no more, no fewer. (3) List anything in the transcript with operational content that did **not** make it into the runbook, and justify each omission. Fix whatever the audit turns up.
+
+The audit's third list is the safety net: the throwaway remark at minute 27 ("oh, and never run it on the first of the month") is exactly what a summarising pass drops and exactly what the next runner needed to know.
+
 ---
 
 ## Step 6 — Have the colleague review the runbook
@@ -154,7 +162,7 @@ This is the most important step. Send the colleague:
 > 1. Anywhere you see `[NEEDS VERIFICATION]`, fill in what's missing.
 > 2. Anywhere the runbook *doesn't* match what you actually do — even if it's a small thing — tell me. Those small things are usually where the next person trips up.
 
-They send back tweaks. Open the file (it's in `~/Desktop/runbook-monthend-recon/`) and ask Claude to apply them:
+They send back tweaks. Open the file (it's in `~/Desktop/claude-lab/runbook-monthend-recon/`) and ask Claude to apply them:
 
 > The colleague reviewed the runbook. Apply these corrections:
 >
@@ -172,7 +180,7 @@ The deeper win: you've now done one process. The pattern works for every other s
 
 The *runbook structure* you used today — Overview → Prerequisites → Steps with done-conditions → Common errors → Deliverable — is the same for every team process. The *transcript* changes. Save the structure as `CLAUDE.md`:
 
-> Create a `CLAUDE.md` in `~/Desktop/runbooks/`. Put in it my stable rules for runbook generation from interview transcripts:
+> Create a `CLAUDE.md` in `~/Desktop/claude-lab/runbooks/`. Put in it my stable rules for runbook generation from interview transcripts:
 >
 > - Five sections: One-paragraph overview, Prerequisites bullets, numbered Steps (each step = action verb + tool + "done when" + decision sub-bullets), Common errors table (`What you see | What it means | What to do`), final "Deliverable / recipient / deadline" block
 > - Skip every "um", "yeah", "let me just" — runbook reads like a careful person wrote it
@@ -181,3 +189,15 @@ The *runbook structure* you used today — Overview → Prerequisites → Steps 
 > - Errors table uses ONLY errors the transcript mentioned — don't invent
 
 `CLAUDE.md` is the magic filename Claude Code reads automatically when you start `claude` in a folder containing it. Next single-person-of-failure process: new folder, copy `CLAUDE.md` over, drop in the new interview transcript, run `claude --dangerously-skip-permissions`, and say *"produce the runbook"*. The format is already loaded.
+
+---
+
+## Step 7 — Level up — a runbook you run, not read
+
+Optional: the markdown goes on SharePoint for the record; this version is for the person actually executing at 7am on the last business day. One prompt:
+
+> Read `runbook.md`. Build a single self-contained file `runbook.html` that I can open by double-clicking — no server, no internet, no external libraries. "Execution mode": each step is a collapsible card with a checkbox, and the checkbox state **persists** when the page is closed and reopened (browser local storage) — so a half-finished run survives a lunch break. The common-errors table lives in a slide-out panel that's always one click away. The deliverable block sits at the end with a "Mark run complete" button that stamps today's date and clears the checkboxes for next month. `[NEEDS VERIFICATION]` flags render in loud amber so nobody executes an unverified step silently. Accent colour `#007a8a`.
+
+The person covering the process double-clicks the file, works the checkboxes top to bottom, and the runbook itself tracks where they are. The amber flags do the nagging until the original owner fills them in.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.

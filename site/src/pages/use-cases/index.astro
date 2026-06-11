@@ -56,8 +56,8 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
       <div class="hero__intro">
         <h1 class="hero__title">Try it on <em>something real</em></h1>
         <p class="hero__lede">
-          <Fragment set:html={linkGlossaryTerms("Twelve worked examples across ten bank functions — a stack of complaints, a credit memo, a regulator PDF, a Greek customer email, an SQL question that died in the gap between data and analyst. Pick one that looks like your day. Each takes 15–30 minutes the first time and a fraction of that once you've done it.")} />
-          <small>Audience: complete beginner · {items.length} use cases · all doable after Day 1</small>
+          <Fragment set:html={linkGlossaryTerms("Fifteen worked examples across ten bank functions — a stack of complaints, a credit memo, a regulator PDF, a Greek customer email, an SQL question that died in the gap between data and analyst. Pick one that looks like your day. Each takes 15–45 minutes the first time and a fraction of that once you've done it. And every walkthrough now climbs the same three-rung ladder: run it, make Claude prove it, then level it up into an interactive page.")} />
+          <small>Audience: complete beginner (one capstone for when the loop clicks) · {items.length} use cases · all doable after Day 1</small>
           <small><a href="/start-here/day-1/">→ haven't done Day 1 yet? Start there.</a></small>
         </p>
       </div>
@@ -117,12 +117,19 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
                 <span class="usecase-card__eyebrow">
                   {BUSINESS_UNIT_LABELS[u.data.business_unit] ?? u.data.business_unit}
                 </span>
-                <span class="usecase-card__time" title="Estimated time end-to-end for a newcomer">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  <span>{u.data.time_estimate}</span>
+                <span class="usecase-card__chips">
+                  {u.data.difficulty === 'intermediate' && (
+                    <span class="usecase-card__level" title="Builds on earlier use cases — do a couple of beginner ones first">
+                      capstone
+                    </span>
+                  )}
+                  <span class="usecase-card__time" title="Estimated time end-to-end for a newcomer">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>{u.data.time_estimate}</span>
+                  </span>
                 </span>
               </div>
               <h2 class="usecase-card__title" data-pin-title>{u.data.title}</h2>
@@ -158,9 +165,9 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
     <div class="wrap">
       <article class="usecase-finale__card">
         <span class="usecase-finale__eyebrow">Pattern recognition</span>
-        <h2 class="usecase-finale__title">Notice the shape of all six</h2>
+        <h2 class="usecase-finale__title">Notice the shape of all fifteen</h2>
         <p class="usecase-finale__lede">
-          Same five-step loop every time. Get the input as a file. Open Claude Code in the folder. Write the prompt as a briefing, not a one-liner. Review what came back. Save the prompt so the second run is a fraction of the first. Once that shape clicks, you'll start spotting it in your own work — and that's when the hub stops being a reference and starts being muscle memory.
+          Same loop every time. Get the input as a file. Open Claude Code in the folder. Write the prompt as a briefing, not a one-liner. Review what came back — then make Claude <em>prove</em> its own output with real commands, not assurances. Save the rules in a CLAUDE.md so the second run is one line. And when the markdown version earns its keep, level it up: <em>"turn this into a single self-contained interactive HTML file I can open by double-clicking."</em> Once that shape clicks, you'll start spotting it in your own work — and that's when the hub stops being a reference and starts being muscle memory. The capstone use case chains the whole loop into a one-line Monday pipeline.
         </p>
         <div class="usecase-finale__actions">
           <a class="usecase-finale__cta usecase-finale__cta--primary" href="/tips/">
@@ -380,6 +387,11 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
       text-transform: uppercase;
       color: var(--nbg-accent, #007a8a);
     }
+    .usecase-card__chips {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
     .usecase-card__time {
       display: inline-flex;
       align-items: center;
@@ -391,6 +403,21 @@ const allUnits = Array.from(new Set(items.map((u) => u.data.business_unit))).sor
       color: var(--nbg-ink-2, #1a3148);
       background: var(--nbg-surface-2, #f4f6fa);
       border: 1px solid var(--nbg-hairline, #ebeff5);
+      border-radius: 999px;
+    }
+    .usecase-card__level {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.18rem 0.55rem;
+      font-family: var(--nbg-ff-mono, ui-monospace, monospace);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      /* !important per starlight-cascade-gotcha.md write-time posture */
+      color: var(--nbg-color-fg-on-accent, #ffffff) !important;
+      background: var(--nbg-accent, #007a8a) !important;
+      border: 1px solid var(--nbg-accent, #007a8a);
       border-radius: 999px;
     }
     .usecase-card .usecase-card__title {

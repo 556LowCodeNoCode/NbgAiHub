@@ -5,7 +5,7 @@ audience: beginner
 topics: [data, sql, reporting]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: A manager asks "how many cards did we issue to under-25s last quarter, split by branch?" You don't write SQL. You describe the tables to Claude in plain English, ask for the query, run it against the data warehouse. Twenty minutes from question to chart.
@@ -49,13 +49,13 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line:
 
 ```
-mkdir ~/Desktop/sql-cards-under25
-cd ~/Desktop/sql-cards-under25
+mkdir -p ~/Desktop/claude-lab/sql-cards-under25
+cd ~/Desktop/claude-lab/sql-cards-under25
 claude --dangerously-skip-permissions
 ```
 
-- `mkdir ~/Desktop/sql-cards-under25` — make a folder named after the question.
-- `cd ~/Desktop/sql-cards-under25` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/sql-cards-under25` — make a folder named after the question, inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/sql-cards-under25` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The cursor is now Claude's.
@@ -157,7 +157,7 @@ If something looks off, paste the actual result back to Claude:
 
 Claude reasons over the SQL, suggests the fix, edits `query.sql`. You run it again.
 
-Once the result is solid, the folder `~/Desktop/sql-cards-under25/` is now your reusable template: schema + query + a comment explaining the question. Next quarter you copy the folder, change the dates in one line, rerun. Three minutes.
+Once the result is solid, the folder `~/Desktop/claude-lab/sql-cards-under25/` is now your reusable template: schema + query + a comment explaining the question. Next quarter you copy the folder, change the dates in one line, rerun. Three minutes.
 
 The deeper win: you've now done one full data-analyst's loop without being a data analyst. The next question against the same schema takes half the time.
 
@@ -172,10 +172,29 @@ mv schema.md CLAUDE.md
 `CLAUDE.md` is the magic filename Claude Code reads automatically every time you start `claude` in a folder containing it. Even better: make a dedicated folder for *all* your warehouse questions:
 
 ```
-mkdir ~/Desktop/warehouse-queries
-mv ~/Desktop/sql-cards-under25/CLAUDE.md ~/Desktop/warehouse-queries/
-cd ~/Desktop/warehouse-queries
+mkdir -p ~/Desktop/claude-lab/warehouse-queries
+mv ~/Desktop/claude-lab/sql-cards-under25/CLAUDE.md ~/Desktop/claude-lab/warehouse-queries/
+cd ~/Desktop/claude-lab/warehouse-queries
 claude --dangerously-skip-permissions
 ```
 
 Now every business question lives in the same folder. Claude already knows the schema. Your next question is just *"how many credit cards were issued to customers over 65 in 2025, by region?"* and Claude writes the SQL. After a month you'll have a personal library of warehouse queries — and your data team will start asking *you* questions.
+
+---
+
+## Step 6 — Level up — prove the query on a miniature database
+
+Reading the query line by line (Step 4) catches the obvious. The subtle bugs — the customer who turns exactly 25 on issue day, the card issued at the quarter boundary — only show up when the query actually *runs*. You don't need warehouse access for that. Paste:
+
+> Build a tiny test database so we can prove the query's logic before I take it to the warehouse. Create a SQLite database `demo.db` with the three tables from `schema.md` and a handful of hand-picked rows covering the edge cases:
+>
+> - a customer who turns **exactly 25** on the day their card is issued (must be excluded — "under 25" means under),
+> - a card issued the day **before** Q1 starts and one the day **after** Q1 ends (both excluded),
+> - a card issued on the **last day** of Q1 (included),
+> - a branch with zero issuance.
+>
+> Adapt `query.sql` to SQLite syntax where needed, run it with `sqlite3`, show me the results, and walk me through whether each edge case behaved as expected.
+
+Claude builds the database, runs the query, and shows you real rows coming back — including the proof that the exactly-25 customer was excluded. (`sqlite3` is preinstalled on macOS; on Ubuntu/WSL, Claude will offer to install it — say yes.)
+
+This is the strongest verification habit in the whole hub: **don't review logic, execute it**. A query that produced the right answer on a database you can hold in one hand earns its run against twelve million rows.

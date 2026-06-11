@@ -156,7 +156,7 @@ const unitLabel = BUSINESS_UNIT_LABELS[entry.data.business_unit] ?? entry.data.b
         <h1 class="hero__title">{heroTitle}</h1>
         <p class="hero__lede">
           <Fragment set:html={linkGlossaryTerms(heroSummary)} />
-          <small>Audience: {entry.data.audience} · {entry.data.time_estimate} · {renderedSteps.length} steps</small>
+          <small>Audience: {entry.data.audience}{entry.data.difficulty === 'intermediate' && ' · capstone'} · {entry.data.time_estimate} · {renderedSteps.length} steps</small>
         </p>
       </div>
 
@@ -1047,9 +1047,12 @@ const unitLabel = BUSINESS_UNIT_LABELS[entry.data.business_unit] ?? entry.data.b
       transition: background 120ms ease, border-color 120ms ease, filter 120ms ease;
     }
     .usecase-next__cta--primary {
-      background: var(--nbg-accent, #007a8a);
-      color: var(--nbg-color-fg-on-accent, #ffffff);
-      border: 1px solid var(--nbg-accent, #007a8a);
+      background: var(--nbg-accent, #007a8a) !important;
+      /* !important per starlight-cascade-gotcha.md — Starlight's unlayered
+         `a { color }` rule beats layered rules in production builds and
+         rendered this CTA dark-on-teal. */
+      color: var(--nbg-color-fg-on-accent, #ffffff) !important;
+      border: 1px solid var(--nbg-accent, #007a8a) !important;
     }
     .usecase-next__cta--primary:hover { filter: brightness(1.06); }
     .usecase-next__cta--secondary {

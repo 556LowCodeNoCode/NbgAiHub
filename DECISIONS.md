@@ -6,6 +6,46 @@ Per CLAUDE.md doc-hygiene: each entry ≤20 lines, structured as Decision (bulle
 
 ---
 
+## 2026-06-11 — Use-case pillar upgrade after full E2E execution audit
+
+**Trigger:** User executed all 12 use cases end-to-end in a test workspace, reviewed the findings, and approved the upgrade proposals — explicitly keeping `--dangerously-skip-permissions` teaching as-is.
+
+- **Every use-case page** gains a "make Claude prove it" subsection (use-case-specific self-verification prompt: grep quotes, recompute sums, execute logic on a test DB) and a final "Level up" step (one-paste prompt → self-contained interactive HTML artifact).
+- **Workspace convention:** all pages standardise on `mkdir -p ~/Desktop/claude-lab/<name>` — one parent folder instead of Desktop sprawl.
+- **3 new use cases:** `policy-quiz-builder` (compliance, order 13), `csv-to-chart` (data, order 14), `complaints-pipeline` (contact-center, order 15, first `difficulty: intermediate` — capstone teaching CLAUDE.md-as-program).
+- **2 new tips:** `make-claude-prove-it` (safety/workflow), `level-up-to-interactive` (workflow/prompting) — the cross-cutting patterns extracted.
+- **Text fixes found during audit:** complaint-heatmap Step 3 contradicted the Step-1 flag (claimed a permission prompt); date range now Mon–Sun; mortgage frontmatter said "three sliders" (page builds four); gallery finale said "all six"; foundations/day-1 said "twelve". Synthetic-source word-count targets (~3000/~4500 words) replaced with structure+tension specs.
+- **Gallery:** lede mentions the three-rung ladder (run → prove → level up); `capstone` chip renders on intermediate cards.
+- **Counts:** use cases 12→15, tips 28→30 — synced via `sync-doc-counts.mjs`; plugin snapshot rebuilt.
+
+**Why:** The E2E audit showed the formula works but beginners skip manual verification and never discover the interactive-HTML jump; baking both into every page closes the two highest-leverage gaps.
+
+**References:** `usecases/*.md` (15 files), `tips/make-claude-prove-it.md`, `tips/level-up-to-interactive.md`, `site/src/pages/use-cases/index.astro`, `site/src/pages/start-here/{foundations,day-1}.astro`, findings: user's test workspace `PersonalProjects/test/use-case-findings.md`.
+
+---
+
+## 2026-06-09 (evening) — NBG-AI fork mirror stays manual; org policy blocks the automation paths
+
+**Trigger:** User wants `NBG-AI/NbgAiHub` fork to redeploy on every push to `556LowCodeNoCode/NbgAiHub`. Tried to wire it; hit org policy walls on every cross-repo-auth approach.
+
+**What's blocked:**
+- Fine-grained PAT scoped to NBG-AI — resource-owner picker rejects NBG-AI for non-org-admins.
+- Deploy keys on `NBG-AI/NbgAiHub` — Settings → Deploy Keys shows "Disabled by NBG-AI"; banner pushes GitHub Apps.
+
+**Decision (for now):** manual two-click flow.
+- Push to `556LowCodeNoCode/NbgAiHub` → click **Sync fork** on `NBG-AI/NbgAiHub` → Actions → **Deploy site to GitHub Pages** → Run workflow on main.
+- No source-side mirror workflow shipped. The draft `mirror-to-fork.yml` was removed — would have just errored on missing secret.
+
+**Paths forward when this becomes painful:**
+- **GitHub App** — sanctioned per the org banner. Personal App with `Contents: Read/write`, install on the fork (one-click approval from an NBG-AI owner), workflow mints installation token via `actions/create-github-app-token`.
+- **Pull-based on the fork** — cron workflow on `NBG-AI/NbgAiHub` mirror-clones source and pushes to itself using built-in `GITHUB_TOKEN`. No cross-repo auth, ~10min cadence. Gotcha: `GITHUB_TOKEN` pushes don't cascade-trigger workflows, so the sync job also `gh workflow run`s `deploy-pages.yml`.
+
+**Why:** current velocity (a handful of pushes per session) doesn't justify chasing the org-admin approval or designing a cron pull. Manual flow is two clicks. Memory `project_nbg_ai_org_policy.md` records the org constraints so future sessions don't re-investigate.
+
+**Refs:** Auto-memory `project_nbg_ai_org_policy.md`. No code shipped.
+
+---
+
 ## 2026-06-09 (afternoon) — Dark theme retuned: lift canvas, dim ink, flip on-accent text
 
 **Trigger:** User reported the dark theme felt burny — pure-black canvas (slate-950 `#0b1419`) + near-white ink (`#e6edf3`) at ~17:1 contrast, and every white-on-bright-teal CTA / filter pill / icon tile reading as a retina-flash against the dark page.

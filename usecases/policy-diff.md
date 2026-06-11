@@ -5,7 +5,7 @@ audience: beginner
 topics: [compliance, documents, review]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: Compliance hands you v3 of a policy and asks "what's different from v2?" Word's track-changes is gone, the diff highlighter shows every comma. Claude reads both, groups the changes by significance, and tells you which two paragraphs you actually need to take to the committee.
@@ -49,15 +49,15 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line:
 
 ```
-mkdir ~/Desktop/policy-review
-cd ~/Desktop/policy-review
+mkdir -p ~/Desktop/claude-lab/policy-review
+cd ~/Desktop/claude-lab/policy-review
 claude --dangerously-skip-permissions
 ```
 
 Plain-English translation:
 
-- `mkdir ~/Desktop/policy-review` — make a new folder called `policy-review` on your Desktop.
-- `cd ~/Desktop/policy-review` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/policy-review` — make a new folder called `policy-review` inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/policy-review` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code in the folder. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 ---
@@ -114,7 +114,7 @@ Press Enter. Claude writes `policy-diff.md` straight away. Long documents take a
 
 ## Step 4 — Cross-check every "material" entry
 
-Open `policy-diff.md` from Finder (it's in your `~/Desktop/policy-review/` folder), or ask Claude:
+Open `policy-diff.md` from Finder (it's in your `~/Desktop/claude-lab/policy-review/` folder), or ask Claude:
 
 > Show me what you wrote in `policy-diff.md`.
 
@@ -128,6 +128,14 @@ If both pass, the change is real. If the quote doesn't match — Claude paraphra
 > The "before" quote for §4.2.1 doesn't match `policy-v1.md`. Re-extract the verbatim text from the source.
 
 Repeat for any quote that doesn't pass.
+
+### Or skip the manual flipping — make Claude prove it
+
+The two-finger test is mechanical, which means you can delegate it. Paste:
+
+> Verify your own diff with commands. For every material change in `policy-diff.md`: search the "before" quote against `policy-v1.md` with `grep -F` and the "after" quote against `policy-v2.md`, and show me each result. Every quote must match **exactly** — if any doesn't, you paraphrased: re-extract the verbatim text from the source and re-run all the checks.
+
+`grep` either finds the exact string or it doesn't — there's no "close enough". On a real 30-page policy this replaces twenty minutes of flipping between documents, and it's the habit that makes the diff trustworthy enough to send to a committee.
 
 ---
 
@@ -153,3 +161,15 @@ If you do policy reviews more than once a quarter, save your judgement rules in 
 > Create a `CLAUDE.md` in this folder. Put in it the stable rules for policy diffs: I always want the structured brief with Material vs Cosmetic sections; for every material change I want the before/after verbatim quote with paragraph reference; uncertain calls get tagged `[UNCERTAIN — please verify]` instead of guessed; the "what this means" line should focus on operational consequences for NBG retail and SME lending, not abstract impact.
 
 Next policy review: copy this CLAUDE.md alongside the new v1/v2 files, run `claude`, and your one-line prompt becomes *"diff policy-v1.md against policy-v2.md"*. Five minutes saved every time.
+
+---
+
+## Step 6 — Level up — a side-by-side diff viewer
+
+Optional, and the version the committee secretary will actually open. One paragraph of prompt:
+
+> Read `policy-v1.md`, `policy-v2.md`, and `policy-diff.md`. Build a single self-contained file `policy-diff.html` that I can open by double-clicking — no server, no internet, no external libraries. Two columns: v1 on the left, v2 on the right, aligned by section. Highlight material changes in soft red (removed/old) and green (added/new), cosmetic changes in grey. Above the columns, a summary strip: count of material vs cosmetic changes, with each material change as a clickable chip that scrolls to the right spot. Keep my "what this means" lines visible next to each material change. Accent colour `#007a8a`.
+
+Double-click the file — track-changes, except it only highlights what matters and it never got "accidentally accepted" by the previous reviewer.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.

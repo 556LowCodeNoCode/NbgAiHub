@@ -13,6 +13,16 @@
       ]
     },
     {
+      "slug": "complaints-pipeline",
+      "title": "Chain it together: complaints in, Monday briefing pack out",
+      "audience": "beginner",
+      "topics": [
+        "contact-center",
+        "automation",
+        "capstone"
+      ]
+    },
+    {
       "slug": "credit-memo-tldr",
       "title": "Compress a 15-page SME credit memo into a 3-bullet summary",
       "audience": "beginner",
@@ -20,6 +30,16 @@
         "risk",
         "credit",
         "summarisation"
+      ]
+    },
+    {
+      "slug": "csv-to-chart",
+      "title": "Get from a CSV to a chart your boss can read, in one prompt",
+      "audience": "beginner",
+      "topics": [
+        "data",
+        "visualisation",
+        "reporting"
       ]
     },
     {
@@ -90,6 +110,16 @@
         "compliance",
         "documents",
         "review"
+      ]
+    },
+    {
+      "slug": "policy-quiz-builder",
+      "title": "Turn any policy into a quiz your team will actually take",
+      "audience": "beginner",
+      "topics": [
+        "compliance",
+        "training",
+        "html"
       ]
     },
     {

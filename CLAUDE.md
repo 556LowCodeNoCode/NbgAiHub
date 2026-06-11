@@ -30,7 +30,7 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 ├── skills/                    ← entries cataloguing 556LowCodeNoCode/Skills marketplace (extended 17-key schema lives in site/src/content.config.ts)
 ├── tips/                      ← entries (prompting, control keys, context, compliance)
 ├── journeys/                  ← day-1.md (full 6-step walkthrough) + foundations.md (newcomer onboarding); week-1.md + by-role TBD
-├── usecases/                  ← 12 beginner-friendly worked examples across 10 business units (Retail, Contact center, Compliance ×2, Mortgages, Operations, HR, Risk, Data, Accounting, Process improvement, Operations multilingual). Same `## Step N — Title` body shape as journeys/. Mac/Windows divergent commands wrapped in `<div data-os="mac">` / `<div data-os="windows">` blocks consumed by the OS toggle on the detail page. Per-OS visibility rules in `site/src/pages/use-cases/[slug].astro` MUST be wrapped in `:global()` because the divs come from `set:html` markdown content and don't carry the Astro scope hash.
+├── usecases/                  ← 15 worked examples across 10 business units (14 beginner + 1 intermediate capstone `complaints-pipeline`). Every page ends with a "make Claude prove it" verification subsection and a "Level up" interactive-HTML step; workspaces standardised under `~/Desktop/claude-lab/<name>`. Same `## Step N — Title` body shape as journeys/. Mac/Windows divergent commands wrapped in `<div data-os="mac">` / `<div data-os="windows">` blocks consumed by the OS toggle on the detail page. Per-OS visibility rules in `site/src/pages/use-cases/[slug].astro` MUST be wrapped in `:global()` because the divs come from `set:html` markdown content and don't carry the Astro scope hash.
 ├── newsletters/               ← periodic internal newsletters. Two files per issue: `<NN>-<slug>.md` (metadata-only frontmatter) + `<NN>-<slug>.html` (raw email HTML, kept verbatim). Rendered by `site/src/pages/newsletter/index.astro` as a single-page archive — left rail lists every issue (newest first, `DD/MM/YYYY | Title`), right column renders the selected issue inside a same-origin `iframe srcdoc` so the email's own styles stay isolated from the site. Authoring: docs/reference/authoring-newsletter.md.
 ├── pipeline/                  ← TypeScript workspace for the RSS Action + skill validator
 │   ├── package.json           ← Node 22, ESM, vitest 4.x, @rowanmanning/feed-parser
@@ -89,9 +89,9 @@ A curated Claude Code knowledge hub for bank colleagues, framed around *"what I 
 | Pillar | Files |
 |---|---|
 | Glossary | 45 |
-| Tips | 28 |
+| Tips | 30 |
 | Skills | 6 |
-| Use Cases | 12 |
+| Use Cases | 15 |
 | Journeys | 2 |
 | Newsletters | 1 |
 | News (published) | 0 |

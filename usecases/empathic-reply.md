@@ -5,7 +5,7 @@ audience: beginner
 topics: [writing, retail, customer-care]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: A frustrated customer emails you. You have three minutes between meetings and a blank reply window. Claude gives you three draft replies in three different tones — you pick the closest one, tweak two sentences, send. The walkthrough works without a real complaint — Claude invents one to practise on.
@@ -51,15 +51,15 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line and press Enter.
 
 ```
-mkdir ~/Desktop/replies-today
-cd ~/Desktop/replies-today
+mkdir -p ~/Desktop/claude-lab/replies-today
+cd ~/Desktop/claude-lab/replies-today
 claude --dangerously-skip-permissions
 ```
 
 Plain-English translation:
 
-- `mkdir ~/Desktop/replies-today` — make a new folder called `replies-today` on your Desktop.
-- `cd ~/Desktop/replies-today` — move the terminal into it.
+- `mkdir -p ~/Desktop/claude-lab/replies-today` — make a new folder called `replies-today` inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/replies-today` — move the terminal into it.
 - `claude --dangerously-skip-permissions` — start Claude Code in this folder. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one where there's nothing it can damage. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The blinking cursor is now Claude's. You're chatting with it.
@@ -125,6 +125,14 @@ Two final passes:
 
 Two minutes. Then paste the final into Outlook, fill the real customer name + your signature back in, send.
 
+### Make Claude prove the drafts follow the rules
+
+The fact-check above needs your judgment, but the format rules are mechanical — so delegate them. Paste:
+
+> Verify your own drafts. (1) Count the words of each draft and show me the counts — every one must be under 150. (2) Search all three drafts for each banned phrase ("we apologise for any inconvenience", "as per our records", "kindly note that") and show me the search output — it must come back empty. (3) List every factual claim in the final draft and match each one to a fact from my briefing. Flag anything that has no source.
+
+Claude checks with real commands and a real claim-by-claim list, not a reassuring "all good". Check 3 is the one that catches the invented *"we've already contacted the merchant"* before the customer does.
+
 ---
 
 ## Step 5 — Save your rules in `CLAUDE.md`
@@ -144,10 +152,22 @@ Ask Claude:
 
 Claude writes the file. Tomorrow's loop:
 
-1. `cp ~/Desktop/replies-today/CLAUDE.md ~/Desktop/replies-2026-05-29/` (the rules travel with you)
+1. `cp ~/Desktop/claude-lab/replies-today/CLAUDE.md ~/Desktop/claude-lab/replies-2026-05-29/` (the rules travel with you)
 2. Drop the new `complaint.txt` in that folder
 3. Run `claude --dangerously-skip-permissions` and just say: *"complaint.txt is about a duplicate charge. We held the funds; released this morning; can't share merchant reasoning. Three drafts."*
 
 Claude already knows the format and the banned phrases from `CLAUDE.md`. You only describe what's *different* about today's complaint.
 
 You've turned the worst kind of task — emotionally draining, repeated dozens of times a day, easy to get wrong — into something tractable.
+
+---
+
+## Step 6 — Level up — a tone studio you can click through
+
+Optional, and a crowd-pleaser: turn the three-drafts output into a small page your whole desk can use.
+
+> Build a single self-contained file called `tone-studio.html` that I can open by double-clicking — no server, no internet, no external libraries. Layout: the customer's complaint from `complaint.txt` on the left; on the right, my three reply drafts as tabs labelled "Warm", "Formal", "Accountable". Each tab shows the draft with a "Copy to clipboard" button and the one-line "best for" rationale underneath. Accent colour `#007a8a`, comfortable to read on a laptop.
+
+Double-click the file — complaint on one side, three tones a tab-click apart, copy button for the winner. Tomorrow you regenerate the drafts for a new complaint and ask Claude to refresh the same page.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.

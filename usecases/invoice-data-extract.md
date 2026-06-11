@@ -5,7 +5,7 @@ audience: beginner
 topics: [accounting, data, automation]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: Suppliers send invoices in every format imaginable. You re-type the fields into Excel for hours. Drop the PDFs into a folder, ask Claude for a CSV with supplier, date, amount, VAT, and invoice number — twenty minutes later you import the CSV into your accounting tool.
@@ -49,14 +49,14 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line:
 
 ```
-mkdir ~/Desktop/invoices-may
-cd ~/Desktop/invoices-may
+mkdir -p ~/Desktop/claude-lab/invoices-may
+cd ~/Desktop/claude-lab/invoices-may
 mkdir invoices
 claude --dangerously-skip-permissions
 ```
 
-- `mkdir ~/Desktop/invoices-may` — make a folder called `invoices-may` on your Desktop.
-- `cd ~/Desktop/invoices-may` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/invoices-may` — make a folder called `invoices-may` inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/invoices-may` — move into it.
 - `mkdir invoices` — make a sub-folder where the invoice files will live.
 - `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
@@ -158,6 +158,21 @@ Pay special attention to:
 
 Iterate. Once the spot-checks pass, you trust the file.
 
+### Then make Claude audit every row, not just your two
+
+Arithmetic doesn't need your eyes. Paste:
+
+> Audit `invoices.csv` row by row, with commands, and show me the results:
+>
+> 1. For every row: `net_amount + vat_amount` must equal `gross_amount` to the cent. Show the arithmetic.
+> 2. For every row: compute the VAT ratio. Greek invoices should be 24%, UK 20% — flag any row that's neither.
+> 3. The CSV's row count must equal the number of files in `invoices/`.
+> 4. For any flagged row, re-open the source file, find the discrepancy, and fix the CSV.
+>
+> Re-run the audit until it's clean.
+
+The VAT-ratio check is the sneaky-good one: it catches the European decimal-separator swap (`1.250,00` read as `1.25`) automatically, because a mangled amount almost never lands on exactly 24% or 20%.
+
 ---
 
 ## Step 6 — That CSV is your handoff point
@@ -172,7 +187,7 @@ The deeper win: the CSV is also a perfect starting point for spend analysis. *"G
 
 The fixes you made in Step 3 ("supplier name is the full legal name, including 'Ltd' / 'A.E.'", date format YYYY-MM-DD, `.` as decimal separator, MISSING for genuinely absent fields) shouldn't be re-typed every month. Tell Claude:
 
-> Create a `CLAUDE.md` in `~/Desktop/invoices-may/`. Put in it the field-extraction rules I established today:
+> Create a `CLAUDE.md` in `~/Desktop/claude-lab/invoices-may/`. Put in it the field-extraction rules I established today:
 >
 > - Supplier name = the company being paid, full legal name including suffixes like Ltd / A.E.
 > - Invoice number = whatever appears next to "Invoice #" / "Invoice No." / "Invoice ref"; for informal receipts use the receipt number; MISSING if there's no identifier at all
@@ -185,7 +200,19 @@ The fixes you made in Step 3 ("supplier name is the full legal name, including '
 Claude reads `CLAUDE.md` automatically when you start it in any folder. Next month:
 
 1. New folder, drop the PDFs in
-2. `cp ~/Desktop/invoices-may/CLAUDE.md .`
+2. `cp ~/Desktop/claude-lab/invoices-may/CLAUDE.md .`
 3. `claude --dangerously-skip-permissions` and just say: *"extract all invoices to invoices.csv"*
 
 Claude already knows every rule. The same CSV format lands every month, which means your accounting-tool import mapping keeps working without re-touching it.
+
+---
+
+## Step 7 — Level up — a review screen instead of a raw CSV
+
+Optional: the CSV is for the accounting tool; this is for the human who signs off on it. One prompt:
+
+> Read `invoices.csv` and the files in `invoices/`. Build a single self-contained file `review.html` that I can open by double-clicking — no server, no internet, no external libraries. A table of every extracted row; clicking a row shows the original invoice's text beside it so I can eyeball the extraction against the source. Highlight rows in amber when any field is `MISSING` and in red when `net + VAT ≠ gross` or the VAT ratio is neither 24% nor 20%. A counter at the top: N invoices, M need attention. Accent colour `#007a8a`.
+
+Double-click it, work the amber and red rows, and the monthly sign-off becomes minutes of looking at exactly the rows that deserve attention — instead of scrolling a spreadsheet hoping wrong numbers jump out.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.

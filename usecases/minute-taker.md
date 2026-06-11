@@ -5,7 +5,7 @@ audience: beginner
 topics: [operations, writing, meetings]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: Teams generates a transcript automatically. It is unreadable. Claude turns it into the minutes you actually want — decisions, action items with owners and deadlines, next steps — in your team's template. Five minutes after the call ends.
@@ -49,15 +49,15 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each command, press Enter after each:
 
 ```
-mkdir ~/Desktop/minutes-arch-review
-cd ~/Desktop/minutes-arch-review
+mkdir -p ~/Desktop/claude-lab/minutes-arch-review
+cd ~/Desktop/claude-lab/minutes-arch-review
 claude --dangerously-skip-permissions
 ```
 
 Plain-English translation:
 
-- `mkdir ~/Desktop/minutes-arch-review` — make a folder for this meeting. Replace `arch-review` with whatever names this meeting.
-- `cd ~/Desktop/minutes-arch-review` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/minutes-arch-review` — make a folder for this meeting inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases). Replace `arch-review` with whatever names this meeting.
+- `cd ~/Desktop/claude-lab/minutes-arch-review` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.) From now on you're chatting with it.
 
 ---
@@ -132,7 +132,7 @@ Press Enter. Claude writes the file in 30–90 seconds, depending on transcript 
 
 ## Step 5 — Sanity-check the action items, then send
 
-Open the minutes file from Finder (it's in your `~/Desktop/minutes-arch-review/` folder), or just ask Claude:
+Open the minutes file from Finder (it's in your `~/Desktop/claude-lab/minutes-arch-review/` folder), or just ask Claude:
 
 > Show me the action items table from `minutes-2026-05-28.md`.
 
@@ -143,6 +143,14 @@ This is the part that matters and the part most likely to be wrong. For each row
 - **What** — is the action verb clear? *"Discuss routing"* is weak. *"Draft a one-pager comparing route A vs B"* is an action item.
 
 Tighten one or two and the minutes are ready.
+
+### Make Claude prove every row against the transcript
+
+The owner/deadline check above is exactly the kind of evidence-finding you can delegate. Paste:
+
+> Verify your own minutes against `transcript.md`. For each action item, quote the exact transcript line where the owner accepted the task, and the exact line where the deadline was stated. Any deadline with no supporting line becomes "TBD". Any owner who never actually accepted gets flagged to me. Then do the same for each decision bullet — quote the line where it was decided. Show me the evidence table.
+
+Claude has to point at lines that exist, not assure you they do. When a row can't produce its evidence, that's the row that would have embarrassed you in front of the attendees.
 
 *In real life you'd paste the markdown into Teams (which renders it natively) or Outlook (plain text, bold the headers) and send to attendees. We're pretending here — the file on your Desktop is the deliverable.*
 
@@ -157,7 +165,19 @@ Save the folder. The pattern is now repeatable: every meeting gets its own dated
 Claude reads `CLAUDE.md` automatically every time you start `claude` in a folder containing it. Next week's loop:
 
 1. New dated folder, drop in this week's transcript
-2. `cp ~/Desktop/minutes-arch-review/CLAUDE.md .` — your style rules travel with you
+2. `cp ~/Desktop/claude-lab/minutes-arch-review/CLAUDE.md .` — your style rules travel with you
 3. `claude --dangerously-skip-permissions` and one line: *"transcript.md is Tuesday's payments standup, attendees A. Papas, M. Costa, J. Vassilas — produce minutes-2026-06-04.md"*
 
 Claude already knows the format from `CLAUDE.md`. You only describe what's new about this meeting.
+
+---
+
+## Step 6 — Level up — deadlines that land in Outlook by themselves
+
+Minutes get read once; calendars get obeyed. One prompt closes the gap:
+
+> For every action item in `minutes-2026-05-28.md` that has a real deadline, create a calendar file: `action-1.ics`, `action-2.ics`, … Each one is a 15-minute reminder block on the deadline date, titled with the action and the owner's name, with the full action-item row in the description. Also draft `followup-email.md` — a short email to all attendees with the summary paragraph, the decisions, and the action table pasted in, ready for Outlook.
+
+`.ics` is the universal calendar format — double-click one and Outlook opens it as an appointment you (or the owner) can save with one click. Email the right `.ics` to the right owner along with the minutes, and the deadline stops being a row in a file someone skimmed.
+
+**The pattern to remember** — Claude's output doesn't have to be a document. Calendar entries, CSVs, web pages: if a file format is plain text under the hood (and most are), Claude can write it, and your office tools can open it.

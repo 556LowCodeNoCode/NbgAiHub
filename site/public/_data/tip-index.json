@@ -59,6 +59,24 @@
       ]
     },
     {
+      "slug": "level-up-to-interactive",
+      "title": "Any output can level up into an interactive page — one sentence does it",
+      "audience": "beginner",
+      "topics": [
+        "workflow",
+        "prompting"
+      ]
+    },
+    {
+      "slug": "make-claude-prove-it",
+      "title": "Don't check Claude's work by hand — make it prove it",
+      "audience": "beginner",
+      "topics": [
+        "safety",
+        "workflow"
+      ]
+    },
+    {
       "slug": "permission-modes",
       "title": "Permission modes — what Shift+Tab toggles",
       "audience": "beginner",

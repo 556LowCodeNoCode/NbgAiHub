@@ -5,7 +5,7 @@ audience: beginner
 topics: [operations, multilingual, customer-care]
 internal: false
 authored: "2026-05-28"
-last_reviewed: "2026-05-28"
+last_reviewed: "2026-06-11"
 external_link: null
 deeper_link: null
 ai_summary: A complaint arrives in Greek and the case needs to escalate to a non-Greek-speaking senior in Frankfurt. Or the reverse — a London supplier sends an English contract that needs to land in front of Athens legal. Claude translates both ways and flags the phrases that don't carry across.
@@ -49,13 +49,13 @@ In Ubuntu, `~/Desktop` is a folder inside WSL's Linux home (`/home/<your-Linux-u
 Type each line:
 
 ```
-mkdir ~/Desktop/translate-complaint
-cd ~/Desktop/translate-complaint
+mkdir -p ~/Desktop/claude-lab/translate-complaint
+cd ~/Desktop/claude-lab/translate-complaint
 claude --dangerously-skip-permissions
 ```
 
-- `mkdir ~/Desktop/translate-complaint` — make a folder on your Desktop.
-- `cd ~/Desktop/translate-complaint` — move into it.
+- `mkdir -p ~/Desktop/claude-lab/translate-complaint` — make a folder inside `claude-lab` on your Desktop (`-p` creates `claude-lab` too if it's not there yet — it's the one home for all hub use cases).
+- `cd ~/Desktop/claude-lab/translate-complaint` — move into it.
 - `claude --dangerously-skip-permissions` — start Claude Code here. The flag stops Claude prompting you for permission on every file write — safe in a fresh, dedicated folder like this one. (If you'd rather see every prompt for your first run, just type `claude` — same thing, more interruptions.)
 
 The cursor is now Claude's.
@@ -144,6 +144,14 @@ If you spot a missed nuance, tell Claude:
 
 Iterate until the notes feel honest.
 
+### Make Claude prove nothing got lost
+
+You can judge nuance; completeness is checkable. Paste:
+
+> Verify your own translation. (1) Count the paragraphs in `source.md` and the rows in the side-by-side table — they must match; show me both counts. (2) Translate your English version **back to Greek** — without looking at the original — then compare that back-translation to `source.md` and list every place where the meaning drifted, however slightly. (3) For each drift, either fix the English or add a translation note explaining why the drift is the right trade-off.
+
+The back-translation test is the oldest trick in professional translation QA, and Claude can run it on itself in one prompt. Drift it finds is drift the Frankfurt reader would have inherited silently.
+
 *In a real cross-border thread you'd paste `translation.md` into Teams or Outlook for the Frankfurt senior, with the Section 3 summary as the first paragraph. We're pretending here — the file on your Desktop is the deliverable.*
 
 The pattern works in either direction (English → Greek or Greek → English) and for any document type — contracts, internal memos, technical specifications. The structure (side-by-side, notes, one-line summary) stays. Only `context.md` changes.
@@ -161,3 +169,15 @@ The three-section structure (side-by-side, translation notes, one-line summary) 
 > - Notes are where the value is. A translation without flagged trade-offs is suspect
 
 `CLAUDE.md` is the magic filename Claude Code reads automatically when you start `claude` in a folder containing it. Next document: copy this CLAUDE.md into a new folder, drop in the source, write a short per-document `context.md` (target language, reader, purpose, tone), run `claude --dangerously-skip-permissions`. Your structure and standards are already loaded.
+
+---
+
+## Step 6 — Level up — nuance notes that appear where you need them
+
+Optional: the notes section is the value, but it lives at the bottom of the file while the reader's eyes are on the table. One prompt fixes the geography:
+
+> Read `translation.md`. Build a single self-contained file `translation.html` that I can open by double-clicking — no server, no internet, no external libraries. Two-column side-by-side layout, Greek left, English right, comfortable to read (generous line height — Greek text needs it). Every phrase that has a translation note gets a dotted underline — hovering over it (or tapping, on a tablet) shows the note as a small tooltip right there. The three-sentence summary pinned at the top in a highlighted box. Accent colour `#007a8a`.
+
+Now the Frankfurt reader sees *"I didn't expect this kind of treatment from you"*, notices the dotted underline, hovers — and learns in place that the Greek implies a damaged relationship, not mere disappointment. The nuance arrives exactly when it's relevant instead of in a footnote they never reached.
+
+**The pattern to remember** — any output Claude can produce as text, it can also produce as a small interactive page. The upgrade prompt is always the same shape: *"turn this into a single self-contained interactive HTML file I can open by double-clicking."* It works on every use case in this hub.
